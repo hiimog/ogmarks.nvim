@@ -1,4 +1,5 @@
 local M = {}
+local Set = require("pl.Set")
 
 local function defaults()
     return {
@@ -7,15 +8,14 @@ local function defaults()
         rowText = "",
         name = "",
         desc = "",
-        tags = {},
+        tags = Set{},
     }
 end
 
 local function validate(values)
     values = values or {}
     local errors = {}
-    local choose = function(a, b) if a == nil then return b else return a end end
-
+    
     return #errors > 0 and errors or nil
 end
 

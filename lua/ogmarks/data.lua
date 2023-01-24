@@ -2,7 +2,10 @@ return function(config)
     local data = {}
     local sqlite = require("lsqlite3")
 
-    local db, errCode, errMsg = sqlite.open(config.db.file)
+    local db, _, errMsg = sqlite.open(config.db.file)
+    if errMsg ~= nil then return nil, errMsg end
 
-    return data
+    data._db = db
+
+    return data, nil
 end
