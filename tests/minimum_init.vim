@@ -1,5 +1,4 @@
 set rtp^=/src/ogmarks.nvim
-set rtp^=/src/ogmarks.nvim/thirdparty
 set rtp^=/src/ogmarks.nvim/tests/thirdparty/plenary.nvim
 runtime plugin/plenary.vim 
 

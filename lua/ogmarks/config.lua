@@ -1,4 +1,5 @@
-local s = require("thirdparty.lua-schema.schema")
+local s = require("thirdparty.schema")
+local Set = require("pl.Set")
 local M = {}
 
 local configSchema = s.Record {

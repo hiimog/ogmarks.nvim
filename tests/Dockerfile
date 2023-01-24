@@ -46,7 +46,8 @@ RUN wget https://github.com/neovim/neovim/releases/download/stable/nvim-linux64.
 
 RUN pip install neovim-remote
 
-RUN sudo luarocks install lsqlite3
+RUN sudo luarocks install lsqlite3 \
+    && sudo luarocks install penlight
 
 COPY . /src/ogmarks.nvim
 
