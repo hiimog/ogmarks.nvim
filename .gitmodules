@@ -1,9 +1,4 @@
 [submodule "tests/thirdparty/plenary.nvim"]
 	path = tests/thirdparty/plenary.nvim
 	url = https://github.com/nvim-lua/plenary.nvim.git
-[submodule "lua/thirdparty/Penlight"]
-	path = lua/thirdparty/Penlight
-	url = https://github.com/lunarmodules/Penlight.git
-[submodule "lua/thirdparty/lua-schema"]
-	path = lua/thirdparty/lua-schema
-	url = https://github.com/sschoener/lua-schema.git
+
