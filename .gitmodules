@@ -4,3 +4,6 @@
 [submodule "lua/thirdparty/Penlight"]
 	path = lua/thirdparty/Penlight
 	url = https://github.com/lunarmodules/Penlight.git
+[submodule "lua/thirdparty/lua-schema"]
+	path = lua/thirdparty/lua-schema
+	url = https://github.com/sschoener/lua-schema.git
