@@ -25,7 +25,9 @@ function M.defaults()
 end
 
 function M.validate(config)
-    return s.CheckSchema(config, configSchema)
+    local err = s.CheckSchema(config, configSchema)
+    if err then return false, err end
+    return true, nil
 end
 
 -- applies config to the defeaults

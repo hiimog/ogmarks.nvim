@@ -1,11 +1,16 @@
 local logFac = require("ogmarks.log")
-local config = require("ogmarks.config")
+local cfg = require("ogmarks.config")
+local dataFac = require("ogmarks.data")
 
-return function(cfg)
-    cfg = config.apply(cfg)
-    local errors = config.validate(cfg)
-    assert(errors == nil, errors)
+return function(config)
+    local M = {}
+    M.config = cfg.apply(config)
+    assert(cfg.validate(config))
 
-    local log = logFac(cfg)
-    log:info("hello!")
+    M.log = logFac(config)
+    M.log:info("ogmarks plugin loading")
+
+    local data = assert(dataFac(config))
+
+    return M
 end

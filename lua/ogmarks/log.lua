@@ -1,24 +1,26 @@
 return function(config)
-    local logger = {}
-    logger._file = io.open(config.logging.file, "a+")
-    logger._level = config.logging.level
-    logger._levels = {
+    local M = {}
+    local file, err = io.open(config.logging.file, "a+")
+    if err then return nil, "Failed to open log file: " .. err end
+    M._file = file
+    M._level = config.logging.level
+    M._levels = {
         off = 0,
         debug = 1,
         info = 2,
         warn = 3,
         error = 4,
     }
-    function logger:_log(level, msg)
-        if  logger._levels[level] < logger._levels[logger._level] then return end
-        logger._file:write(msg)
-        logger._file:flush()
+    function M:_log(level, msg)
+        if  M._levels[level] < M._levels[M._level] then return end
+        M._file:write(msg)
+        M._file:flush()
     end
 
-    function logger:debug(msg) self:_log("debug", msg) end
-    function logger:info(msg) self:_log("info", msg) end
-    function logger:warn(msg) self:_log("warn", msg) end
-    function logger:error(msg) self:_log("error", msg) end
+    function M:debug(msg) self:_log("debug", msg) end
+    function M:info(msg) self:_log("info", msg) end
+    function M:warn(msg) self:_log("warn", msg) end
+    function M:error(msg) self:_log("error", msg) end
     
-    return logger
+    return M, nil
 end
