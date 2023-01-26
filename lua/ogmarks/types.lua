@@ -1,4 +1,4 @@
-local s = require("lua.thirdparty.schema")
+local s = require("ogmarks.schema")
 local M = {}
 
 -- M.projectTableDdl = [[
@@ -33,10 +33,10 @@ M.markTagTableDdl = [[
     CREATE TABLE markTag (
         markId INTEGER,
         tagId INTEGER,
-        CONSTRAINT pkMarkTag PRIMARY KEY (markId, tagId)
-        CONSTRAINT fkMarkId REFERENCES mark(id) ON DELETE CASCADE,
-        CONSTRAINT fkTagId REFERENCES tag(id) ON DELETE CASCADE
-    )
+        PRIMARY KEY (markId, tagId),
+        FOREIGN KEY(markId) REFERENCES mark(id) ON DELETE CASCADE,
+        FOREIGN KEY(tagId) REFERENCES tag(id) ON DELETE CASCADE
+    );
 ]]
 
 M.insertMarkSql = [[ 

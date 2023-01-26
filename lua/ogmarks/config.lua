@@ -1,4 +1,4 @@
-local s = require("thirdparty.schema")
+local s = require("ogmarks.schema")
 local Set = require("pl.Set")
 local M = {}
 
@@ -15,11 +15,11 @@ local configSchema = s.Record {
 function M.defaults()
     return {
         db = {
-            file = vim.fn.stdpath("data") .. "/ogmarks.db",
+            file = "/tmp/ogmarks.db",
         },
         logging = {
-            file = vim.fn.stdpath("log") .. "/ogmarks.log",
-            level = "warn",
+            file = "/tmp/ogmarks.log",
+            level = "debug",
         },
     }
 end
@@ -31,7 +31,7 @@ function M.validate(config)
 end
 
 -- applies config to the defeaults
-function M.apply(config)
+function M.create(config)
     config = config or {}
     config.db = config.db or {}
     config.logging = config.logging or {}
@@ -41,7 +41,7 @@ function M.apply(config)
     end
     local defaults = M.defaults()
     defaults.db.file = choose(config.db.file, defaults.db.file)
-    defaults.logging.file = choose(config.logging.file, defaults.db.file)
+    defaults.logging.file = choose(config.logging.file, defaults.logging.file)
     defaults.logging.level = choose(config.logging.level, defaults.logging.level)
     return defaults
 end

@@ -1,31 +1,22 @@
 return function(config)
     local M = {}
     local List = require("pl.List")
-    local s = require("lua.thirdparty.schema")
+    local s = require("ogmarks.data")
     local Set = require("pl.Set")
     local sqlite = require("lsqlite3")
     local tablex = require("pl.tablex")
-    local types = require("lua.ogmarks.types")
+    local types = require("ogmarks.types")
 
     -- init
     M._tagIds = {}
     M._tagNames = {}
-
-    local db, _, errMsg = sqlite.open(config.db.file)
-    if errMsg ~= nil then return nil, errMsg end
-    M._db = db
-
-    local _, err = M:_ensureCreated()
-    if err then return nil, "Failed to ensure db created: " .. err end
-
-    M:_populateTags()
 
     function M:_ensureCreated()
         for count in self._db:urows("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='mark';") do
             if count == 1 then return true, nil end
         end
         local ddlStmts = List{ types.markTableDdl, types.tagTableDdl, types.markTagTableDdl }
-        for sql in ddlStmts do 
+        for sql in ddlStmts:iter() do 
             local res = self._db:exec(sql)
             if res ~= sqlite.OK then return false, "Failed to execute ddl statement: " .. self._db:errmsg() end
         end
@@ -108,8 +99,17 @@ return function(config)
             marks[markId].tags:append(tag)
         end
 
-        return marks
+        return marks, nil
     end
+
+    local db, _, errMsg = sqlite.open(config.db.file)
+    if db == nil then return nil, errMsg end
+    M._db = db
+
+    local _, err = M:_ensureCreated()
+    if err then return nil, "Failed to ensure db created: " .. err end
+
+    M:_populateTags()
 
     return M, nil
 end
