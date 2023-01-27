@@ -66,13 +66,13 @@ return function(config)
 
     function M:createMarkAtCurPos(markParams)
         markParams = markParams or {}
-        local position = vim.fn.getcurpos()
-        local _, lnum, col, off, curswant = table.unpack(position)
-        local row = lnum - 1
+        local row, col = table.unpack(vim.api.nvim_win_get_cursor(0))
         self.log:debug("ogmarks._createMarkAtCurPos() Current row: \n%s", vim.inspect(row))
         markParams.absolutePath = vim.api.nvim_buf_get_name(0)
         markParams.row = row
-        markParams.rowText = vim.api.nvim_buf_get_lines(0, row, row+1, true)[0]
+        markParams.rowText = vim.api.nvim_buf_get_lines(0, row, row+1, true)[1]
+        markParams.tags = markParams.tags or {}
+        markParams.name = markParams.name or ""
         self.log:debug("ogmarks._createMarkAtCurPos() Creating mark at current position: \n%s", vim.inspect(markParams))
         local newMark, err = self:createMark(markParams)
         if err then self.log:error("Failed to create mark: %s", err) end

@@ -49,6 +49,8 @@ RUN pip install neovim-remote
 RUN sudo luarocks install lsqlite3 \
     && sudo luarocks install penlight
 
+RUN git clone https://github.com/ii14/neorepl.nvim.git ~/.config/nvim/
+
 COPY . /src/ogmarks.nvim
 
 RUN sudo chown -R developer /src && sudo chgrp -R developer /src

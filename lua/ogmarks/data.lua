@@ -20,10 +20,10 @@ return function(config)
     M.markTableDdl = [[
         CREATE TABLE mark (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            absolutePath TEXT NOT NULL,
+            absolutePath TEXT,
             created TEXT NOT NULL,
-            description TEXT NOT NULL,
-            name TEXT NOT NULL,
+            description TEXT,
+            name TEXT,
             row INTEGER NOT NULL,
             rowText TEXT NOT NULL,
             updated TEXT NOT NULL
@@ -48,8 +48,8 @@ return function(config)
     ]]
 
     M.insertMarkSql = [[ 
-        INSERT INTO mark (created, description, name, row, rowText, updated)
-        VALUES (:created, :description, :name, :row, :rowText, :updated);
+        INSERT INTO mark (absolutePath, created, description, name, row, rowText, updated)
+        VALUES (:absolutePath, :created, :description, :name, :row, :rowText, :updated);
     ]]
 
     M.insertTagSql = [[
@@ -79,13 +79,13 @@ return function(config)
     M.markSchema = s.Record {
         id = s.Optional(s.Integer),
         absolutePath = s.String,
-        created = s.Integer,
+        created = s.String,
         description = s.Optional(s.String),
         name = s.String,
         row = s.Integer,
         rowText = s.String,
         tags = s.Collection(s.String),
-        updated = s.Integer,
+        updated = s.String,
     }
 
     M.findMarkSql = [[
@@ -117,6 +117,7 @@ return function(config)
 
     -- create only if they don't exist
     function M:_createTags(tags)
+        tags = tags or {}
         for _, tag in ipairs(tags) do
             if not self._tagIds[tag] then
                 local stmt = self._db:prepare(self.insertTagSql)
@@ -151,7 +152,7 @@ return function(config)
             local tagId = self._tagIds[tag]
             res = stmt:bind_names({markId = mark.id, tagId = tagId})
             if res ~= sqlite.OK then return nil, "Failed to set parameters for markTag table: " .. self._db:errmsg() end
-            res = stmt.step()
+            res = stmt:step()
             if res ~= sqlite.DONE then return nil, "Failed to insert into markTag: " .. self._db:errmsg() end
         end
 
@@ -161,15 +162,15 @@ return function(config)
     end
     
     function M:findMark(id)
-        local stmt = self._db.prepare(self.findMarkSql)
-        stmt.bind_names({id = id})
-        local result = stmt.step()
+        local stmt = self._db:prepare(self.findMarkSql)
+        stmt:bind_names({id = id})
+        local result = stmt:step()
         if result == sqlite.DONE then return nil, string.format("No mark found with id=%d", id) end
         if result ~= sqlite.ROW then return nil,  "Failed finding mark by id: " .. self._db:errmsg() end
-        local mark = result.get_named_values()
+        local mark = stmt:get_named_values()
         mark.tags = List()
-        stmt = self._db.prepare(self.getTagsForMarkSql)
-        stmt.bind_names({id = id})
+        stmt = self._db:prepare(self.getTagsForMarkSql)
+        stmt:bind_names({id = id})
         for tag in stmt:urows() do
             mark.tags:append(tag)
         end
