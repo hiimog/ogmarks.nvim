@@ -13,7 +13,7 @@ return function(config)
     }
     function M:_log(level, msg, ...)
         if  M._levels[level] < M._levels[M._level] then return end
-        M._file:write(string.format(msg, ...))
+        M._file:write(string.format(msg, ...) .. "\n")
         M._file:flush()
     end
 
