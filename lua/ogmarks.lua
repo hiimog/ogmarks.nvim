@@ -79,7 +79,7 @@ return function(config)
         ogmarkParams.tags = ogmarkParams.tags or {}
         ogmarkParams.name = ogmarkParams.name or ""
         self._log:debug("ogmarks.createOgMarkAtCurPos() Creating ogmark at current position: \n%s", vim.inspect(ogmarkParams))
-        return self._data:createOgMark(ogmarkParams)
+        return self:createOgMark(ogmarkParams)
     end
 
     function M:_loadMarkForBuf(bufId)

@@ -149,7 +149,7 @@ return function(config, log)
 
     function M:createOgMark(ogmark)
         local err = s.CheckSchema(ogmark, self.ogmarkSchema)
-        assert(err == nil, "Invalid new ogMark: " .. err)
+        assert(err == nil, string.format("%s", err))
 
         self._createTags(ogmark.tags)
         local stmt = self._db:prepare(self.insertOgMarkSql)
