@@ -1,5 +1,7 @@
-return function(config)
-    local M = {}
+return function(config, log)
+    local M = {
+        _log = log
+    }
     local List = require("pl.List")
     local s = require("ogmarks.schema")
     local sqlite = require("lsqlite3")
@@ -82,6 +84,18 @@ return function(config)
 
     M.getOgMarksForFileSql = [[
         SELECT * FROM ogmark WHERE absolutePath = :absolutePath;
+    ]]
+
+    M.updateOgMarkSql = [[
+        UPDATE ogmark SET
+            absolutePath = :absolutePath,
+            created = :created,
+            description = :description,
+            name = :name,
+            row = :row,
+            rowText = :rowText,
+            updated = :updated
+        WHERE id = :id;
     ]]
 
     M.ogmarkSchema = s.Record {
@@ -220,7 +234,12 @@ return function(config)
     end
 
     function M:updateOgMark(ogmark)
-        
+        local stmt = self._db:prepare(self.updateOgMarkSql)
+        stmt.bind_names(ogmark)
+        local res = stmt:step()
+        if res == sqlite.ERROR then return nil, "Update failed: " .. self._db:errmsg() end
+        if res ~= sqlite.DONE then return nil, "Update failed" end
+
     end
 
     local db, _, errMsg = sqlite.open(config.db.file)
