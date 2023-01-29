@@ -76,6 +76,14 @@ return function(config)
         SELECT t.name FROM markTag mt JOIN tag t ON mt.tagId = t.id WHERE mt.markId = :id;
     ]]
 
+    M.findMarkSql = [[
+        SELECT * FROM mark WHERE id = :id;
+    ]]
+
+    M.getMarksForFileSql = [[
+        SELECT * FROM mark WHERE absolutePath = :absolutePath;
+    ]]
+
     M.markSchema = s.Record {
         id = s.Optional(s.Integer),
         absolutePath = s.String,
@@ -88,9 +96,6 @@ return function(config)
         updated = s.String,
     }
 
-    M.findMarkSql = [[
-        SELECT * FROM mark WHERE id = :id;
-    ]]
 
     function M:_ensureCreated()
         for count in self._db:urows("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='mark';") do
@@ -179,6 +184,16 @@ return function(config)
 
     function M:getAllTags()
         return tablex.keys(self._tagIds)
+    end
+
+    function M:getMarksForFile(absolutePath)
+        local stmt = self._db:prepare(self.getMarksForFileSql)
+        stmt:bind_names({absolutePath = absolutePath})
+        local marksForFile = {}
+        for mark in stmt:nrows() do 
+            table.insert(marksForFile, mark)
+        end
+        return marksForFile, nil
     end
 
     function M:getAllMarks()
