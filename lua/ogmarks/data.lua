@@ -17,8 +17,8 @@ return function(config)
     --     )
     -- ]]
 
-    M.markTableDdl = [[
-        CREATE TABLE mark (
+    M.ogmarkTableDdl = [[
+        CREATE TABLE ogmark (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             absolutePath TEXT,
             created TEXT NOT NULL,
@@ -37,18 +37,18 @@ return function(config)
         );
     ]]
 
-    M.markTagTableDdl = [[ 
-        CREATE TABLE markTag (
-            markId INTEGER,
+    M.ogmarkTagTableDdl = [[ 
+        CREATE TABLE ogmarkTag (
+            ogmarkId INTEGER,
             tagId INTEGER,
-            PRIMARY KEY (markId, tagId),
-            FOREIGN KEY(markId) REFERENCES mark(id) ON DELETE CASCADE,
+            PRIMARY KEY (ogmarkId, tagId),
+            FOREIGN KEY(ogmarkId) REFERENCES ogmark(id) ON DELETE CASCADE,
             FOREIGN KEY(tagId) REFERENCES tag(id) ON DELETE CASCADE
         );
     ]]
 
-    M.insertMarkSql = [[ 
-        INSERT INTO mark (absolutePath, created, description, name, row, rowText, updated)
+    M.insertOgMarkSql = [[ 
+        INSERT INTO ogmark (absolutePath, created, description, name, row, rowText, updated)
         VALUES (:absolutePath, :created, :description, :name, :row, :rowText, :updated);
     ]]
 
@@ -60,31 +60,31 @@ return function(config)
         SELECT id, name FROM tag ORDER BY id;
     ]]
 
-    M.insertMarkTagSql = [[
-        INSERT INTO markTag (markId, tagId) VALUES (:markId, :tagId);
+    M.insertOgMarkTagSql = [[
+        INSERT INTO ogmarkTag (ogmarkId, tagId) VALUES (:ogmarkId, :tagId);
     ]]
 
-    M.getAllMarksSql = [[
-        SELECT * FROM mark;
+    M.getAllOgMarksSql = [[
+        SELECT * FROM ogmark;
     ]]
 
-    M.getAllMarkTagSql = [[
-        SELECT mt.markId, t.name FROM markTag mt JOIN tag t ON mt.tagId = t.id;
+    M.getAllOgMarkTagSql = [[
+        SELECT mt.ogmarkId, t.name FROM ogmarkTag mt JOIN tag t ON mt.tagId = t.id;
     ]]
 
-    M.getTagsForMarkSql = [[
-        SELECT t.name FROM markTag mt JOIN tag t ON mt.tagId = t.id WHERE mt.markId = :id;
+    M.getTagsForOgMarkSql = [[
+        SELECT t.name FROM ogmarkTag mt JOIN tag t ON mt.tagId = t.id WHERE mt.ogmarkId = :id;
     ]]
 
-    M.findMarkSql = [[
-        SELECT * FROM mark WHERE id = :id;
+    M.findOgMarkSql = [[
+        SELECT * FROM ogmark WHERE id = :id;
     ]]
 
-    M.getMarksForFileSql = [[
-        SELECT * FROM mark WHERE absolutePath = :absolutePath;
+    M.getOgMarksForFileSql = [[
+        SELECT * FROM ogmark WHERE absolutePath = :absolutePath;
     ]]
 
-    M.markSchema = s.Record {
+    M.ogmarkSchema = s.Record {
         id = s.Optional(s.Integer),
         absolutePath = s.String,
         created = s.String,
@@ -98,10 +98,10 @@ return function(config)
 
 
     function M:_ensureCreated()
-        for count in self._db:urows("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='mark';") do
+        for count in self._db:urows("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='ogmark';") do
             if count == 1 then return true, nil end
         end
-        local ddlStmts = List{ self.markTableDdl, self.tagTableDdl, self.markTagTableDdl }
+        local ddlStmts = List{ self.ogmarkTableDdl, self.tagTableDdl, self.ogmarkTagTableDdl }
         for sql in ddlStmts:iter() do 
             local res = self._db:exec(sql)
             if res ~= sqlite.OK then return false, "Failed to execute ddl statement: " .. self._db:errmsg() end
@@ -138,85 +138,89 @@ return function(config)
         return nil
     end
 
-    function M:createMark(mark)
-        local err = s.CheckSchema(mark, self.markSchema)
+    function M:createOgMark(ogmark)
+        local err = s.CheckSchema(ogmark, self.ogmarkSchema)
         if err then return nil, err end
 
-        err = self._createTags(mark.tags)
+        err = self._createTags(ogmark.tags)
         if err then return nil, "Failed to create tags: " .. err end
 
-        local stmt = self._db:prepare(self.insertMarkSql)
-        local res = stmt:bind_names(mark)
-        if res ~= sqlite.OK then return nil, "Failed to set parameters for mark table: " .. self._db:errmsg() end
+        local stmt = self._db:prepare(self.insertOgMarkSql)
+        local res = stmt:bind_names(ogmark)
+        if res ~= sqlite.OK then return nil, "Failed to set parameters for ogmark table: " .. self._db:errmsg() end
         res = stmt:step()
-        if res ~= sqlite.DONE then return nil, "Failed to insert mark: " .. self._db:errmsg() end
-        mark.id = stmt:last_insert_rowid()
+        if res ~= sqlite.DONE then return nil, "Failed to insert ogmark: " .. self._db:errmsg() end
+        ogmark.id = stmt:last_insert_rowid()
 
-        for _, tag in ipairs(mark.tags or {}) do
-            stmt = self._db:prepare(self.insertMarkTagSql)
+        for _, tag in ipairs(ogmark.tags or {}) do
+            stmt = self._db:prepare(self.insertOgMarkTagSql)
             local tagId = self._tagIds[tag]
-            res = stmt:bind_names({markId = mark.id, tagId = tagId})
-            if res ~= sqlite.OK then return nil, "Failed to set parameters for markTag table: " .. self._db:errmsg() end
+            res = stmt:bind_names({ogmarkId = ogmark.id, tagId = tagId})
+            if res ~= sqlite.OK then return nil, "Failed to set parameters for ogmarkTag table: " .. self._db:errmsg() end
             res = stmt:step()
-            if res ~= sqlite.DONE then return nil, "Failed to insert into markTag: " .. self._db:errmsg() end
+            if res ~= sqlite.DONE then return nil, "Failed to insert into ogmarkTag: " .. self._db:errmsg() end
         end
 
-        local newMark, err = self:findMark(mark.id)
-        if not newMark then return nil, "Failed to create mark: " .. err end
-        return newMark, nil
+        local newOgMark, err = self:findOgMark(ogmark.id)
+        if not newOgMark then return nil, "Failed to create ogmark: " .. err end
+        return newOgMark, nil
     end
     
-    function M:findMark(id)
-        local stmt = self._db:prepare(self.findMarkSql)
+    function M:findOgMark(id)
+        local stmt = self._db:prepare(self.findOgMarkSql)
         stmt:bind_names({id = id})
         local result = stmt:step()
-        if result == sqlite.DONE then return nil, string.format("No mark found with id=%d", id) end
-        if result ~= sqlite.ROW then return nil,  "Failed finding mark by id: " .. self._db:errmsg() end
-        local mark = stmt:get_named_values()
-        mark.tags = List()
-        stmt = self._db:prepare(self.getTagsForMarkSql)
+        if result == sqlite.DONE then return nil, string.format("No ogmark found with id=%d", id) end
+        if result ~= sqlite.ROW then return nil,  "Failed finding ogmark by id: " .. self._db:errmsg() end
+        local ogmark = stmt:get_named_values()
+        ogmark.tags = List()
+        stmt = self._db:prepare(self.getTagsForOgMarkSql)
         stmt:bind_names({id = id})
         for tag in stmt:urows() do
-            mark.tags:append(tag)
+            ogmark.tags:append(tag)
         end
-        return mark, nil
+        return ogmark, nil
     end
 
     function M:getAllTags()
         return tablex.keys(self._tagIds)
     end
 
-    function M:getMarksForFile(absolutePath)
-        local stmt = self._db:prepare(self.getMarksForFileSql)
+    function M:getOgMarksForFile(absolutePath)
+        local stmt = self._db:prepare(self.getOgMarksForFileSql)
         stmt:bind_names({absolutePath = absolutePath})
-        local marksForFile = {}
-        for mark in stmt:nrows() do 
-            table.insert(marksForFile, mark)
+        local ogmarksForFile = {}
+        for ogmark in stmt:nrows() do 
+            table.insert(ogmarksForFile, ogmark)
         end
-        return marksForFile, nil
+        return ogmarksForFile, nil
     end
 
-    function M:getAllMarks()
-        local marks = {}
-        for mark in self._db:nrows(self.getAllMarksSql) do
-            marks[mark.id] = {
-                id = mark.id,
-                absolutePath = mark.absolutePath,
-                created = mark.created,
-                description = mark.description,
-                name = mark.name,
-                row = mark.row,
-                rowText = mark.rowText,
+    function M:getAllOgMarks()
+        local ogmarks = {}
+        for ogmark in self._db:nrows(self.getAllOgMarksSql) do
+            ogmarks[ogmark.id] = {
+                id = ogmark.id,
+                absolutePath = ogmark.absolutePath,
+                created = ogmark.created,
+                description = ogmark.description,
+                name = ogmark.name,
+                row = ogmark.row,
+                rowText = ogmark.rowText,
                 tags = List(),
-                updated = mark.updated,
+                updated = ogmark.updated,
             }
         end
 
-        for markId, tag in self._db:urows(self.getAllMarkTagSql) do
-            marks[markId].tags:append(tag)
+        for ogmarkId, tag in self._db:urows(self.getAllOgMarkTagSql) do
+            ogmarks[ogmarkId].tags:append(tag)
         end
 
-        return marks, nil
+        return ogmarks, nil
+    end
+
+    function M:updateOgMark(ogmark)
+        
     end
 
     local db, _, errMsg = sqlite.open(config.db.file)

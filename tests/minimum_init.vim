@@ -3,3 +3,8 @@ set rtp^=/src/ogmarks.nvim/tests/thirdparty/plenary.nvim
 runtime plugin/plenary.vim 
 
 lua require("plenary.busted")
+
+lua << EOF
+og = require("ogmarks")()
+og:init()
+EOF
