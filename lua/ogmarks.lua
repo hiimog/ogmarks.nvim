@@ -44,7 +44,7 @@ return function(config)
     end
 
     function M:_bufferPlaceAll(bufId)
-        local bufferAbsolutePath = assert(vim.api.nvim_buf_get_name(bufId), "Can oly create ogmarks for files on disk")
+        local bufferAbsolutePath = self._log:assert(vim.api.nvim_buf_get_name(bufId), "Can oly create ogmarks for files on disk")
         local ogmarks = self._fileMarks[bufferAbsolutePath]
         if not ogmarks then return end
         local lastLine = vim.api.nvim_buf_line_count(bufId)

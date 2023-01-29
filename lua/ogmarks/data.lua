@@ -117,7 +117,7 @@ return function(config, log)
         end
         local ddlStmts = List{ self.ogmarkTableDdl, self.tagTableDdl, self.ogmarkTagTableDdl }
         for sql in ddlStmts:iter() do 
-            assert(self._db:exec(sql) == sqlite.OK, "Failed to execute ddl statement: " .. self._db:errmsg())
+            self._log:assert(self._db:exec(sql) == sqlite.OK, "Failed to execute ddl statement: " .. self._db:errmsg())
         end
     end
 
@@ -138,8 +138,8 @@ return function(config, log)
         for _, tag in ipairs(tags) do
             if not self._tagIds[tag] then
                 local stmt = self._db:prepare(self.insertTagSql)
-                assert(stmt:bind_names({name = tag}) == sqlite.OK, "Failed to bind parameters for inserting tag: " .. self._db:errmsg())
-                assert(stmt:step() == sqlite.DONE, "Failed to insert tag: " .. self._db:errmsg())
+                self._log:assert(stmt:bind_names({name = tag}) == sqlite.OK, "Failed to bind parameters for inserting tag: " .. self._db:errmsg())
+                self._log:assert(stmt:step() == sqlite.DONE, "Failed to insert tag: " .. self._db:errmsg())
                 local id = stmt:last_insert_rowid()
                 self._tagIds[tag] = id
                 self._tagNames[id] = tag
@@ -149,23 +149,23 @@ return function(config, log)
 
     function M:createOgMark(ogmark)
         local err = s.CheckSchema(ogmark, self.ogmarkSchema)
-        assert(err == nil, string.format("%s", err))
+        self._log:assert(err == nil, string.format("%s", err))
 
         self._createTags(ogmark.tags)
         local stmt = self._db:prepare(self.insertOgMarkSql)
-        assert(stmt:bind_names(ogmark) == sqlite.OK, "Failed to set parameters for ogmark table: " .. self._db:errmsg())
-        assert(stmt:step() == sqlite.DONE, "Failed to insert ogmark: " .. self._db:errmsg())
+        self._log:assert(stmt:bind_names(ogmark) == sqlite.OK, "Failed to set parameters for ogmark table: " .. self._db:errmsg())
+        self._log:assert(stmt:step() == sqlite.DONE, "Failed to insert ogmark: " .. self._db:errmsg())
         ogmark.id = stmt:last_insert_rowid()
 
         for _, tag in ipairs(ogmark.tags or {}) do
             stmt = self._db:prepare(self.insertOgMarkTagSql)
             local tagId = self._tagIds[tag]
-            assert(stmt:bind_names({ogmarkId = ogmark.id, tagId = tagId}) == sqlite.OK, "Failed to set parameters for ogmarkTag table: " .. self._db:errmsg())
-            assert(stmt:step() == sqlite.DONE, "Failed to insert into ogmarkTag: " .. self._db:errmsg())
+            self._log:assert(stmt:bind_names({ogmarkId = ogmark.id, tagId = tagId}) == sqlite.OK, "Failed to set parameters for ogmarkTag table: " .. self._db:errmsg())
+            self._log:assert(stmt:step() == sqlite.DONE, "Failed to insert into ogmarkTag: " .. self._db:errmsg())
         end
 
         local newOgMark = self:findOgMark(ogmark.id)
-        return assert(newOgMark, "Could not find newly created ogmark")
+        return self._log:assert(newOgMark, "Could not find newly created ogmark")
     end
     
     function M:findOgMark(id)
@@ -173,7 +173,7 @@ return function(config, log)
         self._log:assert(stmt:bind_names({id = id}) == sqlite.OK, "Failed to bind parameters to find ogmark: " .. self._db:errmsg())
         local res = stmt:step()
         if res == sqlite.DONE then return nil end
-        assert(res == sqlite.ROW, "Failed execute sql to find ogmark: " .. self._db:errmsg())
+        self._log:assert(res == sqlite.ROW, "Failed execute sql to find ogmark: " .. self._db:errmsg())
         local ogmark = stmt:get_named_values()
         ogmark.tags = {}
         stmt = self._db:prepare(self.getTagsForOgMarkSql)
@@ -226,7 +226,7 @@ return function(config, log)
         local stmt = self._db:prepare(self.updateOgMarkSql)
         stmt.bind_names(ogmark)
         local res = stmt:step()
-        assert(stmt:step() == sqlite.DONE, "Update ogmark failed: " .. self._db.errmsg())
+        self._log:assert(stmt:step() == sqlite.DONE, "Update ogmark failed: " .. self._db.errmsg())
         self:_createTags(ogmark.tags)
     end
 

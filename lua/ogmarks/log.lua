@@ -1,5 +1,8 @@
 return function(config)
     local M = {}
+    local function now()
+        return os.date("%Y%m%d%H%M%S")
+    end
     local file, err = io.open(config.logging.file, "a+")
     if err then return nil, "Failed to open log file: " .. err end
     M._file = file
@@ -13,7 +16,7 @@ return function(config)
     }
     function M:_log(level, msg, ...)
         if  M._levels[level] < M._levels[M._level] then return end
-        M._file:write(string.format(msg, ...) .. "\n")
+        M._file:write(level .. ":" .. now() .. ":" .. string.format(msg, ...) .. "\n")
         M._file:flush()
     end
 
