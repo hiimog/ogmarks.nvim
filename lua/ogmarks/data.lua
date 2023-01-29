@@ -113,14 +113,12 @@ return function(config, log)
 
     function M:_ensureCreated()
         for count in self._db:urows("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='ogmark';") do
-            if count == 1 then return true, nil end
+            if count == 1 then return end
         end
         local ddlStmts = List{ self.ogmarkTableDdl, self.tagTableDdl, self.ogmarkTagTableDdl }
         for sql in ddlStmts:iter() do 
-            local res = self._db:exec(sql)
-            if res ~= sqlite.OK then return false, "Failed to execute ddl statement: " .. self._db:errmsg() end
+            assert(self._db:exec(sql) == sqlite.OK, "Failed to execute ddl statement: " .. self._db:errmsg())
         end
-        return true, nil
     end
 
     function M:_populateTags()
@@ -140,60 +138,50 @@ return function(config, log)
         for _, tag in ipairs(tags) do
             if not self._tagIds[tag] then
                 local stmt = self._db:prepare(self.insertTagSql)
-                local res = stmt:bind_names({name = tag})
-                if res ~= sqlite.OK then return self._db:errmsg() end
-                res = stmt:step()
-                if res ~= sqlite.DONE then return self._db:errmsg() end
+                assert(stmt:bind_names({name = tag}) == sqlite.OK, "Failed to bind parameters for inserting tag: " .. self._db:errmsg())
+                assert(stmt:step() == sqlite.DONE, "Failed to insert tag: " .. self._db:errmsg())
                 local id = stmt:last_insert_rowid()
                 self._tagIds[tag] = id
                 self._tagNames[id] = tag
             end
         end
-        return nil
     end
 
     function M:createOgMark(ogmark)
         local err = s.CheckSchema(ogmark, self.ogmarkSchema)
-        if err then return nil, err end
+        assert(err == nil, "Invalid new ogMark: " .. err)
 
-        err = self._createTags(ogmark.tags)
-        if err then return nil, "Failed to create tags: " .. err end
-
+        self._createTags(ogmark.tags)
         local stmt = self._db:prepare(self.insertOgMarkSql)
-        local res = stmt:bind_names(ogmark)
-        if res ~= sqlite.OK then return nil, "Failed to set parameters for ogmark table: " .. self._db:errmsg() end
-        res = stmt:step()
-        if res ~= sqlite.DONE then return nil, "Failed to insert ogmark: " .. self._db:errmsg() end
+        assert(stmt:bind_names(ogmark) == sqlite.OK, "Failed to set parameters for ogmark table: " .. self._db:errmsg())
+        assert(stmt:step() == sqlite.DONE, "Failed to insert ogmark: " .. self._db:errmsg())
         ogmark.id = stmt:last_insert_rowid()
 
         for _, tag in ipairs(ogmark.tags or {}) do
             stmt = self._db:prepare(self.insertOgMarkTagSql)
             local tagId = self._tagIds[tag]
-            res = stmt:bind_names({ogmarkId = ogmark.id, tagId = tagId})
-            if res ~= sqlite.OK then return nil, "Failed to set parameters for ogmarkTag table: " .. self._db:errmsg() end
-            res = stmt:step()
-            if res ~= sqlite.DONE then return nil, "Failed to insert into ogmarkTag: " .. self._db:errmsg() end
+            assert(stmt:bind_names({ogmarkId = ogmark.id, tagId = tagId}) == sqlite.OK, "Failed to set parameters for ogmarkTag table: " .. self._db:errmsg())
+            assert(stmt:step() == sqlite.DONE, "Failed to insert into ogmarkTag: " .. self._db:errmsg())
         end
 
-        local newOgMark, err = self:findOgMark(ogmark.id)
-        if not newOgMark then return nil, "Failed to create ogmark: " .. err end
-        return newOgMark, nil
+        local newOgMark = self:findOgMark(ogmark.id)
+        return assert(newOgMark, "Could not find newly created ogmark")
     end
     
     function M:findOgMark(id)
         local stmt = self._db:prepare(self.findOgMarkSql)
-        stmt:bind_names({id = id})
-        local result = stmt:step()
-        if result == sqlite.DONE then return nil, string.format("No ogmark found with id=%d", id) end
-        if result ~= sqlite.ROW then return nil,  "Failed finding ogmark by id: " .. self._db:errmsg() end
+        self._log:assert(stmt:bind_names({id = id}) == sqlite.OK, "Failed to bind parameters to find ogmark: " .. self._db:errmsg())
+        local res = stmt:step()
+        if res == sqlite.DONE then return nil end
+        assert(res == sqlite.ROW, "Failed execute sql to find ogmark: " .. self._db:errmsg())
         local ogmark = stmt:get_named_values()
-        ogmark.tags = List()
+        ogmark.tags = {}
         stmt = self._db:prepare(self.getTagsForOgMarkSql)
         stmt:bind_names({id = id})
         for tag in stmt:urows() do
-            ogmark.tags:append(tag)
+            table.insert(ogmark.tag, tag)
         end
-        return ogmark, nil
+        return ogmark
     end
 
     function M:getAllTags()
@@ -234,21 +222,19 @@ return function(config, log)
     end
 
     function M:updateOgMark(ogmark)
+        ogmark.tags = ogmark.tags or {}
         local stmt = self._db:prepare(self.updateOgMarkSql)
         stmt.bind_names(ogmark)
         local res = stmt:step()
-        if res == sqlite.ERROR then return nil, "Update failed: " .. self._db:errmsg() end
-        if res ~= sqlite.DONE then return nil, "Update failed" end
-
+        assert(stmt:step() == sqlite.DONE, "Update ogmark failed: " .. self._db.errmsg())
+        self:_createTags(ogmark.tags)
     end
 
     local db, _, errMsg = sqlite.open(config.db.file)
     if db == nil then return nil, errMsg end
     M._db = db
 
-    local _, err = M:_ensureCreated()
-    if err then return nil, "Failed to ensure db created: " .. err end
-
+    M:_ensureCreated()
     M:_populateTags()
 
     return M, nil

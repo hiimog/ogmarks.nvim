@@ -18,8 +18,7 @@ return function(config)
         ogmark.created = now()
         ogmark.updated = ogmark.created
         self._log:debug("ogmarks.createOgMark(): Creating ogmark: \n%s", vim.inspect(ogmark))
-        local newOgMark, err = self._data:createOgMark(ogmark)
-        if err then return nil, "Create ogmark failed: " .. err end
+        local newOgMark = self._data:createOgMark(ogmark)
         self:_createExtMark(newOgMark)
     end
 
@@ -45,10 +44,9 @@ return function(config)
     end
 
     function M:_bufferPlaceAll(bufId)
-        local bufferAbsolutePath = vim.api.nvim_buf_get_name(bufId)
-        if not bufferAbsolutePath then return true, nil end
+        local bufferAbsolutePath = assert(vim.api.nvim_buf_get_name(bufId), "Can oly create ogmarks for files on disk")
         local ogmarks = self._fileMarks[bufferAbsolutePath]
-        if not ogmarks then return true, nil end
+        if not ogmarks then return end
         local lastLine = vim.api.nvim_buf_line_count(bufId)
         for _, ogmark in ipairs(ogmarks) do
             if ogmark.row > lastLine then 
@@ -65,7 +63,8 @@ return function(config)
         self._log:info("ogmarks._saveBufferMarks() got all extmarks from buffer=%d\n%s", bufId, vim.inspect(allExtMarks))
         for _, extMark in ipairs(allExtMarks) do
             local extMarkId, row, col, extra = table.unpack(extMark)
-            local ogmark, err = self._data:findOgMark(extMarkId)
+            local ogmark = self._data:findOgMark(extMarkId)
+            ogmark.row = row
             self._data:updateMark(ogmark)
         end
     end
@@ -80,9 +79,7 @@ return function(config)
         ogmarkParams.tags = ogmarkParams.tags or {}
         ogmarkParams.name = ogmarkParams.name or ""
         self._log:debug("ogmarks.createOgMarkAtCurPos() Creating ogmark at current position: \n%s", vim.inspect(ogmarkParams))
-        local newMark, err = self:createOgMark(ogmarkParams)
-        if err then self._log:error("Failed to create ogmark: %s", err) end
-        return newMark, err
+        return self._data:createOgMark(ogmarkParams)
     end
 
     function M:_loadMarkForBuf(bufId)
