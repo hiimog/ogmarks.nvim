@@ -195,7 +195,7 @@ return function(config, log)
         for ogmark in stmt:nrows() do 
             table.insert(ogmarksForFile, ogmark)
         end
-        return ogmarksForFile, nil
+        return ogmarksForFile
     end
 
     function M:getAllOgMarks()

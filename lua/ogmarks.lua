@@ -45,12 +45,13 @@ return function(config)
 
     function M:_bufferPlaceAll(bufId)
         local bufferAbsolutePath = self._log:assert(vim.api.nvim_buf_get_name(bufId), "Can oly create ogmarks for files on disk")
-        local ogmarks = self._fileMarks[bufferAbsolutePath]
-        if not ogmarks then return end
-        local lastLine = vim.api.nvim_buf_line_count(bufId)
+        local ogmarks = self._data:getOgMarksForFile(bufferAbsolutePath)
+        self._log:info("Placing %d marks in %s", #table, bufferAbsolutePath)
+        if not ogmarks then self._log:debug("No ogmarks for %s", bufferAbsolutePath) return end
+        local numLines = vim.api.nvim_buf_line_count(bufId)
         for _, ogmark in ipairs(ogmarks) do
-            if ogmark.row > lastLine then 
-                M._log:debug("ogmarks._bufferPlaceAll() ogmark id=%d has row=%d is past last line=%d", ogmark.id, ogmark.row, lastLine)
+            if ogmark.row >= numLines then 
+                M._log:debug("ogmarks._bufferPlaceAll() ogmark id=%d has row=%d is past last line=%d", ogmark.id, ogmark.row, numLines)
             else
                 M._log:debug("ogmarks._bufferPlaceAll() ogmark id=%d being placed on row=%d in buf id=%d with filename=%s", ogmark.id, ogmark.row, bufId, ogmark.absolutePath)
                 self:_createExtMark(ogmark)
@@ -60,7 +61,7 @@ return function(config)
 
     function M:_saveBufferOgMarks(bufId)
         local allExtMarks = vim.api.nvim_buf_get_extmarks(bufId, self._namespaceId, 0, -1, {details=true})
-        self._log:info("ogmarks._saveBufferMarks() got all extmarks from buffer=%d\n%s", bufId, vim.inspect(allExtMarks))
+        self._log:debug("ogmarks._saveBufferMarks() got all extmarks from buffer=%d\n%s", bufId, vim.inspect(allExtMarks))
         for _, extMark in ipairs(allExtMarks) do
             local extMarkId, row, col, extra = table.unpack(extMark)
             local ogmark = self._data:findOgMark(extMarkId)
@@ -91,8 +92,6 @@ return function(config)
         end
     end
 
-    M._fileMarks = {}
-    M._ogmarks = {}
     M._config = cfg.create(config)
     assert(cfg.validate(M._config))
 
