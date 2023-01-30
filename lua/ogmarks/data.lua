@@ -114,7 +114,6 @@ return function(config, log)
         updated = s.String,
     }
 
-
     function M:_ensureCreated()
         for count in self._db:urows("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='ogmark';") do
             if count == 1 then return end
@@ -134,7 +133,6 @@ return function(config, log)
             self._tagNames[id] = name
         end
     end
-
 
     -- create only if they don't exist
     function M:_createTags(tags)

@@ -99,6 +99,10 @@ return function(config)
         end
     end
 
+    function M:focuseOgMark(id)
+        local ogMark = self._data:findOgMark(id)
+    end
+
     M._config = cfg.create(config)
     assert(cfg.validate(M._config))
 
