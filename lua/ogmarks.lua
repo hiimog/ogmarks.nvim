@@ -39,11 +39,11 @@ return function(config)
     function M:place()
         local bufIds = vim.api.nvim_list_bufs()
         for _, id in ipairs(bufIds) do
-            M:_bufferPlaceAll(id)
+            M:_placeBufOgMarks(id)
         end
     end
 
-    function M:_bufferPlaceAll(bufId)
+    function M:_placeBufOgMarks(bufId)
         local bufferAbsolutePath = self._log:assert(vim.api.nvim_buf_get_name(bufId), "Can oly create ogmarks for files on disk")
         local ogmarks = self._data:getOgMarksForFile(bufferAbsolutePath)
         self._log:info("Placing %d marks in %s", #table, bufferAbsolutePath)
@@ -59,14 +59,21 @@ return function(config)
         end
     end
 
-    function M:_saveBufferOgMarks(bufId)
+    function M:updateOgMarks()
+        local buffers = vim.api.nvim_list_bufs()
+        for _, bufId in ipairs(buffers) do
+            self:_updateBufOgMarks(bufId)
+        end
+    end
+
+    function M:_updateBufOgMarks(bufId)
         local allExtMarks = vim.api.nvim_buf_get_extmarks(bufId, self._namespaceId, 0, -1, {details=true})
         self._log:debug("ogmarks._saveBufferMarks() got all extmarks from buffer=%d\n%s", bufId, vim.inspect(allExtMarks))
         for _, extMark in ipairs(allExtMarks) do
             local extMarkId, row, col, extra = table.unpack(extMark)
             local ogmark = self._data:findOgMark(extMarkId)
             ogmark.row = row
-            self._data:updateMark(ogmark)
+            self._data:updateOgMark(ogmark)
         end
     end
 

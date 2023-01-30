@@ -98,6 +98,10 @@ return function(config, log)
         WHERE id = :id;
     ]]
 
+    M.deleteAllOgMarkTagsSql = [[ 
+        DELETE FROM ogmarkTag WHERE ogmarkId = :id;
+    ]]
+
     M.ogmarkSchema = s.Record {
         id = s.Optional(s.Integer),
         absolutePath = s.String,
@@ -224,10 +228,17 @@ return function(config, log)
     function M:updateOgMark(ogmark)
         ogmark.tags = ogmark.tags or {}
         local stmt = self._db:prepare(self.updateOgMarkSql)
-        stmt.bind_names(ogmark)
-        local res = stmt:step()
-        self._log:assert(stmt:step() == sqlite.DONE, "Update ogmark failed: " .. self._db.errmsg())
+        stmt:bind_names(ogmark)
+        self._log:assert(stmt:step() == sqlite.DONE, "Update ogmark failed: " .. self._db:errmsg())
         self:_createTags(ogmark.tags)
+        stmt = self._db:prepare(self.deleteAllOgMarkTagsSql)
+        self._log:assert(stmt:step() == sqlite.DONE, "Update og mark failed deleting existing tags: " .. self._db:errmsg())
+        for _, tag in ipairs(ogmark.tags) do 
+            stmt = self._db:prepare(self.insertOgMarkTagSql)
+            local tagId = self._tagIds[tag]
+            self._log:assert(stmt:bind_names({ogmarkId = ogmark.id, tagId = tagId}) == sqlite.OK, "Failed to bind parameters to create ogmarkTag: " .. self._db:errmsg())
+            self._log:assert(stmt:step() == sqlite.DONE, "Failed to insert into ogmarkTag to update ogmark: " .. self._db:errmsg())
+        end
     end
 
     local db, _, errMsg = sqlite.open(config.db.file)
