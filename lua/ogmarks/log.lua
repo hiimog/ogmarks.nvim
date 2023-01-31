@@ -24,8 +24,8 @@ return function(config)
     function M:info(msg, ...) self:_log("info", msg, ...) end
     function M:warn(msg, ...) self:_log("warn", msg, ...) end
     function M:error(msg, ...) self:_log("error", msg, ...) end
-    function M:assert(res, err)
-        if not res and err then self:error(err) end
+    function M:assert(res, err, ...)
+        if not res and err then self:error(err, ...) end
         return assert(res, err)
     end
     return M, nil

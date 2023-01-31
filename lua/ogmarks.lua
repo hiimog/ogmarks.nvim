@@ -1,11 +1,8 @@
 return function(config)
     local vim = vim
-    local logFac = require("ogmarks.log")
     local cfg = require("ogmarks.config")
     local dataFac = require("ogmarks.data")
-    local tablex = require("pl.tablex")
-    local List = require("pl.List")
-    local s = require("ogmarks.schema")
+    local logFac = require("ogmarks.log")
 
     local M = {}
 
@@ -99,8 +96,15 @@ return function(config)
         end
     end
 
-    function M:focuseOgMark(id)
-        local ogMark = self._data:findOgMark(id)
+    function M:focusOgMark(ogmarkId)
+        --self._log:assert(vim.api.nvim_win_is_valid(winId), "Window id=%d is invalid", winId)
+        local ogMark = self._data:findOgMark(ogmarkId)
+        self._log:debug("ogmarks.focusOgMark(%d) = \n%s", ogmarkId, vim.inspect(ogMark))
+        if ogMark == nil then return end
+        local row = ogMark.row + 1
+        vim.cmd(":e " .. ogMark.absolutePath)
+        self:_createExtMark(ogMark)
+        vim.api.nvim_win_set_cursor(0, {row, 0})
     end
 
     M._config = cfg.create(config)
