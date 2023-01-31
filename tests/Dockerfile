@@ -55,6 +55,6 @@ COPY . /src/ogmarks.nvim
 
 RUN sudo chown -R developer /src && sudo chgrp -R developer /src
 
-WORKDIR /src/ogmarks.nvim/tests
+WORKDIR /src/ogmarks.nvim
 
-#CMD ["nvim", "--headless", "-u", "spec.vim", "-c", "PlenaryBustedDirectory specs/ {minimal_init = 'spec.vim'}"]
+CMD ["nvim", "--headless", "-u", "tests/minimum_init.vim", "-c", "PlenaryBustedDirectory tests/specs/ {minimal_init = 'tests/minimum_init.vim'}"]

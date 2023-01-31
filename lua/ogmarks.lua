@@ -26,13 +26,6 @@ return function(config)
         })
     end
 
-    function M:init()
-        self._log:debug("ogmarks.init() starting")
-        if not M._namespaceId then
-            M._namespaceId = vim.api.nvim_create_namespace("ogmarks")
-        end
-    end
-
     function M:place()
         local bufIds = vim.api.nvim_list_bufs()
         for _, id in ipairs(bufIds) do
@@ -113,7 +106,7 @@ return function(config)
     M._log = logFac(M._config)
     M._log:info("ogmarks() ogmarks plugin loading with configuration:\n%s", vim.inspect(M._config))
     M._data = M._log:assert(dataFac(M._config, M._log))
-    M:init()
-
+    M._namespaceId = vim.api.nvim_create_namespace("ogmarks")
+    
     return M
 end
