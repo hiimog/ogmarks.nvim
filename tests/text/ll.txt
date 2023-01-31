@@ -1,0 +1,11 @@
+total 40K
+drwxrwxr-x 5 og og 4.0K Jan 30 21:34 tests/
+drwxrwxr-x 9 og og 4.0K Jan 30 21:22 .git/
+drwxrwxr-x 3 og og 4.0K Jan 30 21:21 lua/
+drwxrwxr-x 7 og og 4.0K Jan 30 12:47 ./
+drwxrwxr-x 2 og og 4.0K Jan 30 12:47 plugin/
+-rw-rw-r-- 1 og og  135 Jan 23 23:24 .gitmodules
+drwxrwxr-x 2 og og 4.0K Jan 23 22:15 .vscode/
+-rw-rw-r-- 1 og og 1.5K Jan 23 22:12 LICENSE
+-rw-rw-r-- 1 og og   54 Jan 23 22:12 README.md
+drwxrwxr-x 4 og og 4.0K Jan 23 22:12 ../
