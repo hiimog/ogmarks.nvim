@@ -3,9 +3,7 @@ return function(config)
     local function now()
         return os.date("%Y%m%d%H%M%S")
     end
-    local file, err = io.open(config.logging.file, "a+")
-    if err then return nil, "Failed to open log file: " .. err end
-    M._file = file
+    M._file = assert(io.open(config.logging.file, "a+"))
     M._level = config.logging.level
     M._levels = {
         off = 0,
@@ -28,5 +26,10 @@ return function(config)
         if not res and err then self:error(err, ...) end
         return assert(res, err)
     end
-    return M, nil
+
+    function M:dispose()
+        io.close(self._file)
+    end
+    
+    return M
 end

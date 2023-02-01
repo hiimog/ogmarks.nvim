@@ -17,6 +17,7 @@ return function(config)
         self._log:debug("ogmarks.createOgMark(): Creating ogmark: \n%s", vim.inspect(ogmark))
         local newOgMark = self._data:createOgMark(ogmark)
         self:_createExtMark(newOgMark)
+        return newOgMark
     end
 
     function M:_createExtMark(ogmark)
@@ -73,7 +74,7 @@ return function(config)
         self._log:debug("ogmarks.createOgMarkAtCurPos() at (%d, %d)", row, col)
         ogmarkParams.absolutePath = vim.api.nvim_buf_get_name(0)
         ogmarkParams.row = row - 1
-        ogmarkParams.rowText = vim.api.nvim_buf_get_lines(0, row, row+1, true)[1]
+        ogmarkParams.rowText = vim.fn.getline(".")
         ogmarkParams.tags = ogmarkParams.tags or {}
         ogmarkParams.name = ogmarkParams.name or ""
         self._log:debug("ogmarks.createOgMarkAtCurPos() Creating ogmark at current position: \n%s", vim.inspect(ogmarkParams))
@@ -100,6 +101,12 @@ return function(config)
         vim.api.nvim_win_set_cursor(0, {row, 0})
     end
 
+    function M:dispose()
+        self._log:info("Shutting down plugin")
+        self._data:dispose()
+        self._log:dispose()
+    end
+
     M._config = cfg.create(config)
     assert(cfg.validate(M._config))
 
@@ -107,6 +114,6 @@ return function(config)
     M._log:info("ogmarks() ogmarks plugin loading with configuration:\n%s", vim.inspect(M._config))
     M._data = M._log:assert(dataFac(M._config, M._log))
     M._namespaceId = vim.api.nvim_create_namespace("ogmarks")
-    
+
     return M
 end

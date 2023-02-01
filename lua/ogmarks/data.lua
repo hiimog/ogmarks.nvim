@@ -136,9 +136,11 @@ return function(config, log)
 
     -- create only if they don't exist
     function M:_createTags(tags)
+        self._log:debug("data._createTags() creating tags: %s", vim.inspect(tags))
         tags = tags or {}
         for _, tag in ipairs(tags) do
             if not self._tagIds[tag] then
+                self._log:debug("data._createTags() creating %s", tag)
                 local stmt = self._db:prepare(self.insertTagSql)
                 self._log:assert(stmt:bind_names({name = tag}) == sqlite.OK, "Failed to bind parameters for inserting tag: " .. self._db:errmsg())
                 self._log:assert(stmt:step() == sqlite.DONE, "Failed to insert tag: " .. self._db:errmsg())
@@ -150,10 +152,12 @@ return function(config, log)
     end
 
     function M:createOgMark(ogmark)
+        self._log:debug("data.createOgMark() creating %s", vim.inspect(ogmark))
         local err = s.CheckSchema(ogmark, self.ogmarkSchema)
+        self._log:debug("data.createOgMark check schema result: %s", vim.inspect(err))
         self._log:assert(err == nil, string.format("%s", err))
 
-        self._createTags(ogmark.tags)
+        self:_createTags(ogmark.tags)
         local stmt = self._db:prepare(self.insertOgMarkSql)
         self._log:assert(stmt:bind_names(ogmark) == sqlite.OK, "Failed to set parameters for ogmark table: " .. self._db:errmsg())
         self._log:assert(stmt:step() == sqlite.DONE, "Failed to insert ogmark: " .. self._db:errmsg())
@@ -181,7 +185,7 @@ return function(config, log)
         stmt = self._db:prepare(self.getTagsForOgMarkSql)
         stmt:bind_names({id = id})
         for tag in stmt:urows() do
-            table.insert(ogmark.tag, tag)
+            table.insert(ogmark.tags, tag)
         end
         return ogmark
     end
@@ -239,6 +243,10 @@ return function(config, log)
         end
     end
 
+    function M:dispose()
+        self._db:close()
+    end
+
     local db, _, errMsg = sqlite.open(config.db.file)
     if db == nil then return nil, errMsg end
     M._db = db
@@ -246,5 +254,5 @@ return function(config, log)
     M:_ensureCreated()
     M:_populateTags()
 
-    return M, nil
+    return M
 end
