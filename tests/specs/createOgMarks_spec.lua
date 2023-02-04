@@ -42,8 +42,10 @@ describe("creating marks", function()
         assert.are.same(ogMark, values)
     end)
 
-    it("should error when trying to create a mark out of bounds", function()
-        local config = util:defaultConfig("should error when trying to create a mark out of bound")
+
+
+    describe("out of bounds", function()
+        local config = util:defaultConfig("out of bounds")
         local og = require("ogmarks")(config)
         util:openTextFile(vim, "countries.txt")
         local badOgMark = {
@@ -52,6 +54,16 @@ describe("creating marks", function()
             rowText = "",
             name = "bad",
         }
-        assert.has_error_like(function() og:createOgMark(badOgMark) end, function (e) return stringx.lfind(e, "Failed to create extmark") >= 0 end)
+        it("should should error with a message about creating extmark", function ()
+            assert.has_error_like(function() og:createOgMark(badOgMark) end, function (e) 
+                return stringx.lfind(e, "Failed to create extmark") >= 0 
+            end)
+        end)
+        it("should not have the mark in the database", function ()
+            local db = sqlite.open(config.db.file)
+            for count in db:urows("SELECT COUNT(*) FROM ogmark;") do
+                assert.are.equal(0, count)
+            end
+        end)
     end)
 end)
