@@ -1,7 +1,9 @@
 local util = require("tests.util")
+require("tests.customAssertions")
 
 describe("creating marks", function() 
     local sqlite = require("lsqlite3")
+    local stringx = require("pl.stringx")
 
     it("should create an ogmark in the configured database", function()
         local config = util:defaultConfig("should create an ogmark in the configured database")
@@ -50,6 +52,6 @@ describe("creating marks", function()
             rowText = "",
             name = "bad",
         }
-        assert.has_no.errors(function() og:createOgMark(badOgMark) end)
+        assert.has_error_like(function() og:createOgMark(badOgMark) end, function (e) return stringx.lfind(e, "Failed to create extmark") >= 0 end)
     end)
 end)

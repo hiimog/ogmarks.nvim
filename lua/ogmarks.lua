@@ -17,8 +17,10 @@ return function(config)
         ogmark.tags = ogmark.tags or {}
         self._log:debug("ogmarks.createOgMark(): Creating ogmark: \n%s", vim.inspect(ogmark))
         local newOgMark = self._data:createOgMark(ogmark)
-        if not pcall(function() self:_createExtMark(newOgMark) end) then
+        local isGood, err = pcall(function() self:_createExtMark(newOgMark) end)
+        if not isGood then
             self._data:tryDelete(newOgMark.id)
+            self._log:assert(false, "Failed to create extmark for ogmark: "..err)
         end
         return newOgMark
     end
