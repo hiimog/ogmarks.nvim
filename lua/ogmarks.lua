@@ -78,6 +78,8 @@ return function(config)
         local row, col = table.unpack(vim.api.nvim_win_get_cursor(0))
         self._log:debug("ogmarks.createOgMarkAtCurPos() at (%d, %d)", row, col)
         ogmarkParams.absolutePath = vim.api.nvim_buf_get_name(0)
+        print("absPath = " .. ogmarkParams.absolutePath)
+        self._log:assert(ogmarkParams.absolutePath ~= "", "OgMarks can only be created for files")
         ogmarkParams.row = row - 1
         ogmarkParams.rowText = vim.fn.getline(".")
         ogmarkParams.tags = ogmarkParams.tags or {}

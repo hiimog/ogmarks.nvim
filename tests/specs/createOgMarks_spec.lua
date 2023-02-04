@@ -42,8 +42,6 @@ describe("creating marks", function()
         assert.are.same(ogMark, values)
     end)
 
-
-
     describe("out of bounds", function()
         local config = util:defaultConfig("out of bounds")
         local og = require("ogmarks")(config)
@@ -65,5 +63,11 @@ describe("creating marks", function()
                 assert.are.equal(0, count)
             end
         end)
+    end)
+
+    it("should fail for buffers not backed by a file", function() 
+        local config = util:defaultConfig("should fail for buffers not backed by file")
+        local og = require("ogmarks")(config)
+        assert.has_error(function() og:createOgMarkAtCurPos() end, "OgMarks can only be created for files")
     end)
 end)
