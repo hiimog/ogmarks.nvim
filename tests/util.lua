@@ -17,4 +17,25 @@ function M:createSpecDbName(specName)
     return self:createSpecFileName(specName) .. ".db"
 end
 
+function M:defaultConfig(specName)
+    local config = {
+        db = {
+            file = self:createSpecDbName(specName)
+        },
+        logging = {
+            file = self:createSpecLogName(specName),
+            level = "debug"
+        }
+    }
+    return config
+end
+
+function M:openTextFile(vim, file)
+    vim.cmd("e /src/ogmarks.nvim/tests/text/" .. file)
+end
+
+function M:setCursor(vim, row, col)
+    vim.api.nvim_win_set_cursor(0, {row, col})
+end
+
 return M

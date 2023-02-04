@@ -1,23 +1,16 @@
 local util = require("tests.util")
 
 describe("creating marks", function() 
+    local sqlite = require("lsqlite3")
+
     it("should create an ogmark in the configured database", function()
-        local sqlite = require("lsqlite3")
-        local config = {
-            db = {
-                file = util:createSpecDbName("should create an ogmark")
-            },
-            logging = {
-                file = util:createSpecLogName("should create an ogmark"),
-                level = "debug"
-            }
-        }
+        local config = util:defaultConfig("should create an ogmark in the configured database")
         local og = require("ogmarks")(config)
         -- load lorem ipsum
-        vim.cmd(":e tests/text/lorem.txt")
+        util:openTextFile(vim, "lorem.txt")
 
         -- goto the 4th line: mea ad idque decore docendi.
-        vim.api.nvim_win_set_cursor(0, {4, 0})
+        util:setCursor(vim, 4, 0)
 
         -- create the ogmark
         local ogMark = og:createOgMarkAtCurPos({
@@ -45,5 +38,18 @@ describe("creating marks", function()
             table.insert(values.tags, tag)
         end
         assert.are.same(ogMark, values)
+    end)
+
+    it("should error when trying to create a mark out of bounds", function()
+        local config = util:defaultConfig("should error when trying to create a mark out of bound")
+        local og = require("ogmarks")(config)
+        util:openTextFile(vim, "countries.txt")
+        local badOgMark = {
+            absolutePath = vim.api.nvim_buf_get_name(0),
+            row = 9999,
+            rowText = "",
+            name = "bad",
+        }
+        assert.has_no.errors(function() og:createOgMark(badOgMark) end)
     end)
 end)

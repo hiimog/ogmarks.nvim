@@ -2,30 +2,16 @@ local util = require("tests.util")
 local vim = vim
 describe("loading ogmarks", function()
     it("should load a mark from an existing database", function()
-        local config = {
-            db = {
-                file = "tests/dbs/lorem_line_4.db"
-            },
-            logging = {
-                file = util:createSpecLogName("should load a mark from an existing database"),
-                level = "debug"
-            }
-        }
+        local config = util:defaultConfig("should load a mark from an existing database")
+        config.db.file = "tests/dbs/lorem_line_4.db"
         local og = require("ogmarks")(config)
         og:focusOgMark(1)
         assert.are.same("mea ad idque decore docendi.", vim.fn.getline("."))
     end)
 
     it("should jump back and forth between marks on the same buffer", function()
-        local config = {
-            db = {
-                file = "tests/dbs/lorem_line_4_8_10.db"
-            },
-            logging = {
-                file = util:createSpecLogName("should jump back and forth between marks on the same page"),
-                level = "debug"
-            }
-        }
+        local config = util:defaultConfig("should jump back and forth between marks on the same buffer")
+        config.db.file ="tests/dbs/lorem_line_4_8_10.db"
         local og = require("ogmarks")(config)
         og:focusOgMark(1)
         assert.are.same("mea ad idque decore docendi.", vim.fn.getline("."))
@@ -36,24 +22,16 @@ describe("loading ogmarks", function()
     end)
 
     it("should jump between buffers", function()
-        local config = {
-            db = {
-                file = util:createSpecDbName("should jump between buffer"),
-            },
-            logging = {
-                file = util:createSpecLogName("should jump between buffers"),
-                level = "debug"
-            }
-        }
+        local config = util:defaultConfig("should jump between buffers")
         local og = require("ogmarks")(config)
-        vim.cmd("e /src/ogmarks.nvim/tests/text/ll.txt")
+        util:openTextFile(vim, "ll.txt")
         vim.cmd("norm G")
         og:createOgMarkAtCurPos()
-        vim.cmd("e /src/ogmarks.nvim/tests/text/lorem.txt")
-        vim.cmd("norm 4j<cr>")
+        util:openTextFile(vim, "lorem.txt")
+        vim.cmd("norm gg4j")
         og:createOgMarkAtCurPos()
-        vim.cmd("e /src/ogmarks.nvim/tests/text/countries.txt")
-        vim.cmd("norm 20j<cr>")
+        util:openTextFile(vim, "countries.txt")
+        vim.cmd("norm gg20j")
         og:createOgMarkAtCurPos()
         og:focusOgMark(1)
         assert.are.same("drwxrwxr-x 4 og og 4.0K Jan 23 22:12 ../", vim.fn.getline("."))

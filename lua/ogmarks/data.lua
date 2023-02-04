@@ -6,6 +6,7 @@ return function(config, log)
     local s = require("ogmarks.schema")
     local sqlite = require("lsqlite3")
     local tablex = require("pl.tablex")
+    local types = require("pl.types")
 
     -- init
     M._tagIds = {}
@@ -102,6 +103,10 @@ return function(config, log)
         DELETE FROM ogmarkTag WHERE ogmarkId = :id;
     ]]
 
+    M.tryDeleteOgMarkSql = [[
+        DELETE FROM ogmark WHERE id = :id;
+    ]]
+
     M.ogmarkSchema = s.Record {
         id = s.Optional(s.Integer),
         absolutePath = s.String,
@@ -176,6 +181,7 @@ return function(config, log)
     
     function M:findOgMark(id)
         local stmt = self._db:prepare(self.findOgMarkSql)
+        -- todo: don't assert here, do the type check
         self._log:assert(stmt:bind_names({id = id}) == sqlite.OK, "Failed to bind parameters to find ogmark: " .. self._db:errmsg())
         local res = stmt:step()
         if res == sqlite.DONE then return nil end
@@ -241,6 +247,14 @@ return function(config, log)
             self._log:assert(stmt:bind_names({ogmarkId = ogmark.id, tagId = tagId}) == sqlite.OK, "Failed to bind parameters to create ogmarkTag: " .. self._db:errmsg())
             self._log:assert(stmt:step() == sqlite.DONE, "Failed to insert into ogmarkTag to update ogmark: " .. self._db:errmsg())
         end
+    end
+
+    function M:tryDelete(id)
+        self._log:debug("data.tryDelete(%d)", id)
+        if not types.is_type(id, "number") or not types.is_integer(id) then return end
+        local stmt = self._db:prepare(self.tryDeleteOgMarkSql)
+        stmt:bind_names({id = id})
+        self._log:assert(stmt:step() == sqlite.DONE, "Failed to delete ogmark with id=%d", id)
     end
 
     function M:dispose()

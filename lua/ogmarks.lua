@@ -14,9 +14,12 @@ return function(config)
         ogmark.id = nil
         ogmark.created = now()
         ogmark.updated = ogmark.created
+        ogmark.tags = ogmark.tags or {}
         self._log:debug("ogmarks.createOgMark(): Creating ogmark: \n%s", vim.inspect(ogmark))
         local newOgMark = self._data:createOgMark(ogmark)
-        self:_createExtMark(newOgMark)
+        if not pcall(function() self:_createExtMark(newOgMark) end) then
+            self._data:tryDelete(newOgMark.id)
+        end
         return newOgMark
     end
 
