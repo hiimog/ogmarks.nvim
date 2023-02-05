@@ -15,7 +15,7 @@ describe("creating marks", function()
         util:setCursor(vim, 4, 0)
 
         -- create the ogmark
-        local ogMark = og:createOgMarkAtCurPos({
+        local ogMark = og:createHere({
             name = "a title",
             description = "an ogmark created for a test",
             tags = {
@@ -53,7 +53,7 @@ describe("creating marks", function()
             name = "bad",
         }
         it("should should error with a message about creating extmark", function ()
-            assert.has_error_like(function() og:createOgMark(badOgMark) end, function (e) 
+            assert.has_error_like(function() og:create(badOgMark) end, function (e) 
                 return stringx.lfind(e, "Failed to create extmark") >= 0 
             end)
         end)
@@ -68,6 +68,6 @@ describe("creating marks", function()
     it("should fail for buffers not backed by a file", function()
         local config = util:defaultConfig("should fail for buffers not backed by file")
         local og = require("ogmarks")(config)
-        assert.has_error(function() og:createOgMarkAtCurPos() end, "OgMarks can only be created for files")
+        assert.has_error(function() og:createHere() end, "OgMarks can only be created for files")
     end)
 end)

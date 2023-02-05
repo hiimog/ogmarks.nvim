@@ -156,10 +156,10 @@ return function(config, log)
         end
     end
 
-    function M:createOgMark(ogmark)
-        self._log:debug("data.createOgMark() creating %s", vim.inspect(ogmark))
+    function M:create(ogmark)
+        self._log:debug("data.create() creating %s", vim.inspect(ogmark))
         local err = s.CheckSchema(ogmark, self.ogmarkSchema)
-        self._log:debug("data.createOgMark check schema result: %s", vim.inspect(err))
+        self._log:debug("data.create check schema result: %s", vim.inspect(err))
         self._log:assert(err == nil, string.format("%s", err))
 
         self:_createTags(ogmark.tags)
