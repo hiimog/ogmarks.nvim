@@ -1,1 +1,1 @@
-vim.cmd([[echom "automatic, still is"]])
+-- intentionally left blank for now
