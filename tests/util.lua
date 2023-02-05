@@ -38,4 +38,10 @@ function M:setCursor(vim, row, col)
     vim.api.nvim_win_set_cursor(0, {row, col})
 end
 
+function M:delAllBuf(vim)
+    for _, id in ipairs(vim.api.nvim_list_bufs()) do
+        vim.api.nvim_buf_delete(id, {force=true})
+    end
+end
+
 return M
