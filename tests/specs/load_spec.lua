@@ -1,6 +1,7 @@
 local util = require("tests.util")
 local vim = vim
 describe("loading ogmarks", function()
+    before_each(function() util:delAllBuf(vim) end)
     it("should load a mark from an existing database", function()
         local config = util:defaultConfig("should load a mark from an existing database")
         config.db.file = "tests/dbs/lorem_line_4.db"
