@@ -54,7 +54,7 @@ describe("creating marks", function()
         }
         it("should should error with a message about creating extmark", function ()
             assert.has_error_like(function() og:create(badOgMark) end, function (e) 
-                return stringx.lfind(e, "Failed to create extmark") >= 0 
+                return stringx.lfind(e, "Failed to create extmark") ~= nil 
             end)
         end)
         it("should not have the mark in the database", function ()
@@ -68,6 +68,7 @@ describe("creating marks", function()
     it("should fail for buffers not backed by a file", function()
         local config = util:defaultConfig("should fail for buffers not backed by file")
         local og = require("ogmarks")(config)
+        vim.cmd("enew")
         assert.has_error(function() og:createHere() end, "OgMarks can only be created for files")
     end)
 end)

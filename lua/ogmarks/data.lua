@@ -107,6 +107,10 @@ return function(config, log)
         DELETE FROM ogmark WHERE id = :id;
     ]]
 
+    M.deleteByRowSql = [[
+        DELETE FROM ogmark WHERE absolutePath = :absolutePath AND row = :row
+    ]]
+
     M.ogmarkSchema = s.Record {
         id = s.Optional(s.Integer),
         absolutePath = s.String,
@@ -255,6 +259,21 @@ return function(config, log)
         local stmt = self._db:prepare(self.tryDeleteOgMarkSql)
         stmt:bind_names({id = id})
         self._log:assert(stmt:step() == sqlite.DONE, "Failed to delete ogmark with id=%d", id)
+    end
+
+    function M:delete(id)
+        self._log:debug("data.delete(%d)", id)
+        local stmt = self._db:prepare(self.tryDeleteOgMarkSql)
+        self._log:assert(stmt:bind_names({id = id}) == sqlite.OK, "Failed to bind id to delete sql statement")
+        self._log:assert(stmt:step() == sqlite.DONE, "Failed to delete ogmark with id=%d", id)
+        local numChanges = self:_numChanges()
+        self._log:assert(numChanges == 1, "Failed to delete ogmark: number of changes to be 1, but got %d", numChanges)
+    end
+
+    function M:_numChanges()
+        for numChanges in self._db:urows("SELECT changes()") do
+            return numChanges
+        end
     end
 
     function M:dispose()
