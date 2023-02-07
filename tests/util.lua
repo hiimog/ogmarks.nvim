@@ -34,6 +34,18 @@ function M:openTextFile(vim, file)
     vim.cmd("e /src/ogmarks.nvim/tests/text/" .. file)
 end
 
+function M:openLorem(vim)
+    self:openTextFile(vim, "lorem.txt")
+end
+
+function M:openLl(vim)
+    self:openTextFile(vim, "ll.txt")
+end
+
+function M:openCountries(vim)
+    self:openTextFile(vim, "countries.txt")
+end
+
 function M:setCursor(vim, row, col)
     vim.api.nvim_win_set_cursor(0, {row, col})
 end

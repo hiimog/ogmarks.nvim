@@ -9,7 +9,7 @@ describe("creating marks", function()
         local config = util:defaultConfig("should create an ogmark in the configured database")
         local og = require("ogmarks")(config)
         -- load lorem ipsum
-        util:openTextFile(vim, "lorem.txt")
+        util:openLorem(vim)
 
         -- goto the 4th line: mea ad idque decore docendi.
         util:setCursor(vim, 4, 0)
@@ -45,7 +45,7 @@ describe("creating marks", function()
     describe("out of bounds", function()
         local config = util:defaultConfig("out of bounds")
         local og = require("ogmarks")(config)
-        util:openTextFile(vim, "countries.txt")
+        util:openCountries(vim)
         local badOgMark = {
             absolutePath = vim.api.nvim_buf_get_name(0),
             row = 9999,
