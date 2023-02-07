@@ -22,7 +22,6 @@ return function(config)
         ogmark.created = now()
         ogmark.updated = ogmark.created
         ogmark.tags = ogmark.tags or {}
-        self._log:debug("ogmarks.create(): Creating ogmark: \n%s", vim.inspect(ogmark))
         local newOgMark = self._data:create(ogmark)
         local isGood, err = pcall(function() self:_createExtMark(newOgMark) end)
         if not isGood then
@@ -38,27 +37,29 @@ return function(config)
         self._log:debug("ogmarks.createHere() at %s:(%d, %d)", absolutePath, row, col)
         self._log:assert(absolutePath ~= "", "OgMarks can only be created for files")
         ogmarkParams.absolutePath = absolutePath
-        ogmarkParams.row = row - 1
+        ogmarkParams.row = row
         ogmarkParams.rowText = vim.fn.getline(".")
         ogmarkParams.tags = ogmarkParams.tags or {}
         ogmarkParams.name = ogmarkParams.name or ""
-        self._log:debug("ogmarks.createHere() Creating ogmark at current position: \n%s", vim.inspect(ogmarkParams))
         return self:create(ogmarkParams)
     end
 
     function M:delete(id)
         self._log:info("Deleting ogmark with id=%d", id)
         self._data:delete(id)
+        for _, bufId in ipairs(vim.api.nvim_list_bufs()) do
+            vim.api.nvim_buf_del_extmark(bufId, self._namespaceId, id)
+        end
     end
 
     function M:deleteHere()
-        local _, row, _ = self:_getPosition()
-        local extMarks = vim.api.nvim_buf_get_extmarks(0, self._namespaceId, {row, 0}, {row+1, 0})
+        local extMarks = self:_getExtMarksHere() or {}
+        self._log:debug("ogmarks.deleteHere() found extMarks: \n%s", vim.inspect(extMarks))
         for _, extMark in ipairs(extMarks) do
             local extMarkId, row, col, extra = table.unpack(extMark)
             local ogmark = self._data:findOgMark(extMarkId)
             self._log:assert(ogmark, "extmark found, but corresponding ogmark was not: %id", extMarkId)
-            self._log:debug("ogmarks.deleteHere() deleting ogmark id=%d\n%s", vim.inspect(ogmark))
+            self._log:debug("ogmarks.deleteHere() deleting ogmark\n%s", vim.inspect(ogmark))
             self:delete(extMarkId)
         end
     end
@@ -87,16 +88,19 @@ return function(config)
         self._log:dispose()
     end
 
+    -- returns 0 based row
     function M:_getPosition()
         local absolutePath = vim.api.nvim_buf_get_name(0)
         local row, col = table.unpack(vim.api.nvim_win_get_cursor(0))
-        return absolutePath, row, col
+        return absolutePath, row - 1, col
     end
 
-    function M:_getExtMarkHere()
-        local _, row, _ = self:_getPosition()
-        local extMarks = vim.api.nvim_buf_get_extmarks(0, self._namespaceId, {row, 0}, {row+1, 0})
-        self._log:debug("ogmarks._getExtMarkHere() found %d:\n%s", #extMarks, vim.inspect(extMarks))
+    function M:_getExtMarksHere()
+        local absolutePath, row, col = self:_getPosition()
+        self._log:debug("ogmarks._getExtMarksHere() = %s:(%d,%d)", absolutePath, row, col)
+        local extMarks = vim.api.nvim_buf_get_extmarks(0, self._namespaceId, {row, 0}, {row+1, 0}, {details=true})
+        self._log:debug("ogmarks._getExtMarksHere() found %d:\n%s", #extMarks, vim.inspect(extMarks))
+        return extMarks
     end
 
     function M:_createExtMark(ogmark)
