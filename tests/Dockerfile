@@ -57,6 +57,4 @@ RUN sudo chown -R developer /src && sudo chgrp -R developer /src
 
 WORKDIR /src/ogmarks.nvim
 
-RUN tests/setupdbs.sh
-
 CMD ["nvim", "--headless", "-u", "tests/minimum_init.vim", "-c", "PlenaryBustedDirectory tests/specs/ {minimal_init='tests/minimum_init.vim',sequential=1}"]
