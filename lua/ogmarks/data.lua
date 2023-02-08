@@ -2,6 +2,7 @@
 LUA
 
 {
+    project = "helloworld"
     ogmarks = {
         {
             id = 1, 
@@ -37,6 +38,7 @@ LUA
 JSON
 
 {
+    "project": "helloworld",
     "ogmarks": [
         {
             "id": 1,
@@ -69,3 +71,8 @@ JSON
     }
 }
 ]]
+local config = require("ogmarks.config")
+local M = {}
+M._project = nil
+
+return M
