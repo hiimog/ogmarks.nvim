@@ -13,17 +13,11 @@ function M:createSpecLogName(specName)
     return self:createSpecFileName(specName) .. ".log"
 end
 
-function M:createSpecDbName(specName)
-    return self:createSpecFileName(specName) .. ".db"
-end
-
 function M:defaultConfig(specName)
     local config = {
-        db = {
-            file = self:createSpecDbName(specName)
-        },
+        projectDir = "/tmp/ogmarks/"..specName,
         logging = {
-            file = self:createSpecLogName(specName),
+            file = "/tmp/ogmarks/"..self:createSpecLogName(specName),
             level = "debug"
         }
     }

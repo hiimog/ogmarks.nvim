@@ -15,7 +15,8 @@ M.level = "debug"
 local function makeLogFunc(level)
     return function(msg, ...)
         if levels[level] < levels[M.level] then return end
-        M.file:write(string.format(msg, ...))
+        local bulk = string.format(msg, ...)
+        M.file:write(level .. ":" .. util:timestamp() .. ":" .. bulk .. "\n")
     end
 end
 

@@ -72,7 +72,16 @@ JSON
 }
 ]]
 local config = require("ogmarks.config")
+local log = require("ogmarks.log")
 local M = {}
 M._project = nil
+
+function M:init()
+    os.execute("mkdir -p "..config.projectDir)
+end
+
+function M:save()
+    
+end
 
 return M
