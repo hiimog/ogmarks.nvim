@@ -3,6 +3,10 @@ local data = require("ogmarks.data")
 local log = require("ogmarks.log")
 local M = {}
 
+-- handle >5.1 unpack deprecation
+---@diagnostic disable-next-line: deprecated
+table.unpack = table.unpack or unpack
+
 function M:setup(values)
     if values == nil then return end
     assert(type(values) == "table", "values must be a table")
@@ -21,6 +25,10 @@ function M:load(project)
         data:save()
     end
     data:load(project)
+end
+
+function M:newProject(name)
+    log:info("Creating new project: %s", name)
 end
 
 return M
