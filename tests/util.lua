@@ -17,7 +17,7 @@ function M:defaultConfig(specName)
     local config = {
         projectDir = "/tmp/ogmarks/"..specName,
         logging = {
-            file = "/tmp/ogmarks/"..self:createSpecLogName(specName),
+            file = "/tmp/"..self:createSpecLogName(specName),
             level = "debug"
         }
     }

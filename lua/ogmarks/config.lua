@@ -2,7 +2,7 @@ local vim = vim
 local M =  {}
 M.logging = {
     level = "debug",
-    file = "ogmarks.log"
+    file = "/tmp/ogmarks.log"
 }
 M.projectDir = vim.fn.stdpath("data") .. "/ogmarks"
 

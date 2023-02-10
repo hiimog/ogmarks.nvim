@@ -2,7 +2,7 @@
 LUA
 
 {
-    project = "helloworld"
+    name = "helloworld"
     ogmarks = {
         {
             id = 1, 
@@ -38,7 +38,7 @@ LUA
 JSON
 
 {
-    "project": "helloworld",
+    "name": "helloworld",
     "ogmarks": [
         {
             "id": 1,
@@ -81,7 +81,13 @@ function M:init()
 end
 
 function M:save()
-    
+    log:assert(self._project and self._project.name, "Invalid state: project must be open with valid name")
+    local file = log:assert(io.open(config.projectDir .. self._project.name .. ".json", "w+"))
+    if not file then return end
+    local json = vim.json.encode(self._project)
+    file:write(json)
+    file:flush()
+    file:close()
 end
 
 return M

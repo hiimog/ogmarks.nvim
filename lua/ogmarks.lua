@@ -10,9 +10,9 @@ function M:setup(values)
     if values.logging.level ~= nil then config.logging.level = values.logging.level end
     if values.logging.file ~= nil then config.logging.file = values.logging.file end
     if values.projectDir ~= nil then config.projectDir = values.projectDir end
-
-    data:init()
     log:init()
+    log:info("ogmarks starting")
+    data:init()
 end
 
 function M:load(project)

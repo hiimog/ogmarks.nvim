@@ -13,10 +13,10 @@ local levels = {
 M.level = "debug"
 
 local function makeLogFunc(level)
-    return function(msg, ...)
+    return function(self, msg, ...)
         if levels[level] < levels[M.level] then return end
-        local bulk = string.format(msg, ...)
-        M.file:write(level .. ":" .. util:timestamp() .. ":" .. bulk .. "\n")
+        local body = string.format(msg, ...)
+        self._file:write(level .. ":" .. util:timestamp() .. ":" .. body .. "\n")
     end
 end
 
@@ -27,6 +27,18 @@ M.error = makeLogFunc("error")
 function M:setLevel(level)
     assert(levels[level], string.format("Invalid log level: %s", level))
     self.level = level
+end
+
+function M:assert(condition, errMsg)
+    if not condition then 
+        self:error(error)
+        assert(condition, errMsg)
+    end
+end
+
+function M:init()
+    M._file = io.open(config.logging.file, "a")
+    assert(M._file, "Could not open log file for writing")
 end
 
 return M

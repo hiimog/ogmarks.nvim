@@ -1,5 +1,5 @@
 local ogmarks = require("ogmarks")
-local util = require("util")
+local util = require("tests.util")
 
 
 describe("project creation", function()
