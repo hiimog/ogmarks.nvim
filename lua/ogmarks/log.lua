@@ -16,7 +16,7 @@ local function makeLogFunc(level)
     return function(self, msg, ...)
         if levels[level] < levels[M.level] then return end
         local body = string.format(msg, ...)
-        self._file:write(level .. ":" .. util:timestamp() .. ":" .. body .. "\n")
+        self._file:write(level .. ":" .. util.timestamp() .. ":" .. body .. "\n")
     end
 end
 
@@ -24,6 +24,7 @@ M.debug = makeLogFunc("debug")
 M.info = makeLogFunc("info")
 M.warn = makeLogFunc("warn")
 M.error = makeLogFunc("error")
+
 function M:setLevel(level)
     assert(levels[level], string.format("Invalid log level: %s", level))
     self.level = level

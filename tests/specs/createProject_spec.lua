@@ -16,9 +16,9 @@ describe("project creation", function()
         }
         for caseNum, testCase in ipairs(testCases) do
             local projectName, because = table.unpack(testCase)
-            local isGood, error = pcall(function() ogmarks:newProject(projectName) end)
+            local isGood, err = pcall(function() ogmarks:new(projectName) end)
             assert.is_false(isGood, string.format("%d: Project name %s", caseNum, because))
-            assert.not_nil(string.find(error or "", "Project name"), string.format("%d: Error should mention project name"))
+            assert.not_nil(string.find(err or "", "Project name"), string.format("%d: Error should mention project name but got %s", caseNum, err))
         end
     end)
 end)
