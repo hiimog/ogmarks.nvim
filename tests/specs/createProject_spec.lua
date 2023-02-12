@@ -32,6 +32,7 @@ describe("project creation", function()
         ogmarks:new("bar")
         local file = io.open("/tmp/bar.json", "r")
         assert.not_nil(file, "File not found")
+---@diagnostic disable-next-line: need-check-nil
         file:close()
     end)
 end)

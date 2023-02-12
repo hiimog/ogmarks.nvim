@@ -54,7 +54,7 @@ function M:new(name)
     local absPath = self:createProjectAbsPath(name)
     log:info("Creating new project: %s", absPath)
     self._project = self:baseProjectStrucure(name)
-    local json = vim.json.encode(project)
+    local json = vim.json.encode(self._project)
     local file = log:assert(io.open(self:createProjectAbsPath(self._project.name), "w+"), "Failed to open file for new project")
     if not file then return end
     file:write(json)
