@@ -15,4 +15,13 @@ describe("loading ogmarks", function ()
         local extmarks = vim.api.nvim_buf_get_extmarks(0, ogmarks._namespace, 0, -1, {details = false})
         assert.are.same(3, #extmarks)
     end)
+
+    util:delAllBuf(vim)
+
+    it("should open the file and go to the line when loading a specific mark", function ()
+        ogmarks:load("ll")
+        ogmarks:loadMark(2)
+        local line = vim.fn.getline(".")
+        assert.are.same("drwxrwxr-x 9 og og 4.0K Jan 30 21:22 .git/", line)
+    end)
 end)

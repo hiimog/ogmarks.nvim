@@ -1,0 +1,30 @@
+{
+    "name": "ll",
+    "ogmarks": [
+        {
+            "id": 1,
+            "absPath": "/src/ogmarks.nvim/tests/text/ll.txt",
+            "name": "tests",
+            "description": "The tests row",
+            "row": 1,
+            "rowText": "drwxrwxr-x 5 og og 4.0K Jan 30 21:34 tests/",
+            "created": "42",
+            "updated": "42"
+        },
+        {
+            "id": 2,
+            "absPath": "/src/ogmarks.nvim/tests/text/ll.txt",
+            "name": "git",
+            "description": "The .git row",
+            "row": 2,
+            "rowText": "drwxrwxr-x 9 og og 4.0K Jan 30 21:22 .git/",
+            "created": "42",
+            "updated": "42"
+        }
+    ],
+    "tags": {
+        "hidden": [2],
+        "dir": [1,2]
+    },
+    "config": {}
+}
