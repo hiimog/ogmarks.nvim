@@ -62,6 +62,32 @@ function M:new(name)
     self:load(name)
 end
 
+function M:markHere()
+    log:assert(self._project, "ogmarks can only be created for active projects")
+    local absPath, row, col = util.currentPosition()
+    log:info("Creating new ogmark in %s:(%d, %d)", absPath, row, col)
+    local newMark = self:baseMark()
+    newMark.row = row
+    newMark.absPath = absPath
+    newMark.rowText = vim.fn.getline(".")
+    newMark.id = #self._project.ogmarks + 1
+    return newMark
+end
+
+function M:baseMark()
+    local ts = util.timestamp()
+    return {
+        id = nil,
+        absPath = nil,
+        name = nil,
+        row = nil,
+        rowText = nil,
+        description = nil,
+        created = ts,
+        updated = ts
+    }
+end
+
 function M:isValid(name)
     if name == nil or type(name) ~= "string" then return false end
     return string.match(name, NAME_PATTERN) ~= nil

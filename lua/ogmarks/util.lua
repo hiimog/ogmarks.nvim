@@ -25,4 +25,10 @@ function M.forEachBuf(func)
     end
 end
 
+function M.currentPosition()
+    local file = vim.api.nvim_buf_get_name(0)
+    local row, col = table.unpack(vim.api.nvim_win_get_position(0))
+    return file, row, col
+end
+
 return M
