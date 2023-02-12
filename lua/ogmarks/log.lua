@@ -32,14 +32,13 @@ end
 
 function M:assert(condition, errMsg)
     if not condition then 
-        self:error(error)
+        self:error(errMsg)
         assert(condition, errMsg)
     end
 end
 
 function M:init()
-    M._file = io.open(config.logging.file, "a")
-    assert(M._file, "Could not open log file for writing")
+    self._file = assert(io.open(config.logging.file, "a"))
 end
 
 return M

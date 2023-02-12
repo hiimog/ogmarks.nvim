@@ -49,11 +49,11 @@ function M:delExtMarks()
 end
 
 function M:new(name)
-    log:assert(self:isValid(name), string.format("Project name must match the expression %s", NAME_PATTERN))
+    log:assert(self:isValid(name), "Project name is invalid")
     log:assert(not self:exists(name), "Project already exists")
     local absPath = self:createProjectAbsPath(name)
     log:info("Creating new project: %s", absPath)
-    local project = self:baseProjectStrucure(name)
+    self._project = self:baseProjectStrucure(name)
     local json = vim.json.encode(project)
     local file = log:assert(io.open(self:createProjectAbsPath(self._project.name), "w+"), "Failed to open file for new project")
     if not file then return end
