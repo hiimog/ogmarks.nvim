@@ -4,7 +4,8 @@ local log = require("ogmarks.log")
 local util = require("ogmarks.util")
 local M = {
     _project = nil,
-    _namespace = nil
+    _namespace = nil,
+    _augroup = nil
 }
 
 -- handle >5.1 unpack deprecation
@@ -29,6 +30,17 @@ end
 function M:load(name)
     log:info("Loading project: %s", name)
     log:assert(self:exists(name), "Project not found")
+    local text = self:_readFile(self:createProjectAbsPath(name))
+    self._project = vim.json.decode(text)
+end
+
+function M:_readFile(file)
+    local f, err = io.open(file, "r")
+    log:assert(f, "Failed to open file: "..(err or ""))
+    f = f or {} -- satisfy diagnostic
+    local text = f:read("a")
+    f:close()
+    return text
 end
 
 function M:delExtMark(id)
@@ -55,7 +67,8 @@ function M:new(name)
     log:info("Creating new project: %s", absPath)
     self._project = self:baseProjectStrucure(name)
     local json = vim.json.encode(self._project)
-    local file = log:assert(io.open(self:createProjectAbsPath(self._project.name), "w+"), "Failed to open file for new project")
+    local file, err = io.open(self:createProjectAbsPath(self._project.name), "w+")
+    local file = log:assert(file, "Failed to open file for new project: " .. (err or ""))
     if not file then return end
     file:write(json)
     file:close()
@@ -139,6 +152,26 @@ function M:baseProjectStrucure(name)
         ogmarks = {},
         tags = {}
     }
+end
+
+function M:loadForBuf(bufId)
+    log:assert(self._project, "Project must be open")
+    local bufName = vim.api.nvim_buf_get_name(bufId)
+    local ogmarks = util.where(self._project.ogmarks, function(k, v)
+        return v.absPath == bufName
+    end)
+    for _, ogmark in pairs(ogmarks) do
+        vim.api.nvim_buf_set_extmark(bufId, self._namespace, ogmark.row, 0, {
+            id = ogmark.id,
+            sign_text = "🔖"
+        })
+    end
+end
+
+function M:createAutoCmds()
+    self._augroup = vim.api.nvim_create_augroup("ogmarks", {
+        clear = true,
+    })
 end
 
 return M

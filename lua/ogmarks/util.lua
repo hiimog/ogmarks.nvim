@@ -31,4 +31,12 @@ function M.currentPosition()
     return file, row, col
 end
 
+function M.where(tbl, func)
+    local res = {}
+    for key, value in pairs(tbl) do
+        if func(key, value) then res[key] = value end
+    end
+    return res
+end
+
 return M
