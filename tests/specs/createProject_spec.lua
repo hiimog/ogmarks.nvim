@@ -21,4 +21,9 @@ describe("project creation", function()
             assert.not_nil(string.find(err or "", "Project name"), string.format("%d: Error should mention project name but got %s", caseNum, err))
         end
     end)
+
+    it("should error if trying to create a new project with a duplicate name", function()
+        ogmarks:new("foo")
+        assert.has_error(function() ogmarks:new("foo") end, "Project already exists")
+    end)
 end)
