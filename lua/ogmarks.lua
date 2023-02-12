@@ -64,7 +64,7 @@ function M:save()
     file:close()
 end
 
-function M:load(name)
+function M:loadProj(name)
     log:info("Loading project: %s", name)
     log:assert(self:_projExists(name), "Project not found")
     local text = self:_readFile(self:_createProjAbsPath(name))

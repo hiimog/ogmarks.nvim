@@ -9,6 +9,6 @@ describe("loading projects", function ()
     config.projectDir = "/src/ogmarks.nvim/tests/dummy/"
     ogmarks:setup(config)
     it("", function ()
-        ogmarks:load("lorem")
+        ogmarks:loadProj("lorem")
     end)
 end)
