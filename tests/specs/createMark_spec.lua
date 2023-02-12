@@ -1,3 +1,4 @@
+---@diagnostic disable: duplicate-set-field
 local ogmarks = require("ogmarks")
 local util = require("tests.util")
 local ogmarksUtil = require("ogmarks.util")
@@ -10,7 +11,7 @@ describe("marking lines", function ()
 
     it("should error if there is no active project", function ()
         assert.has_error(function ()
-            ogmarks:markHere()
+            ogmarks:mark()
         end, "ogmarks can only be created for active projects")
     end)
 
@@ -20,7 +21,7 @@ describe("marking lines", function ()
     it("should create a mark at the current position", function ()
         util:openLorem(vim)
         local saveSpy = spy.on(ogmarks,"save")
-        local mark = ogmarks:markHere()
+        local mark = ogmarks:mark()
         assert.are.same({
             id = 1,
             absPath = "/src/ogmarks.nvim/tests/text/lorem.txt",

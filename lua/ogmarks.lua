@@ -27,20 +27,65 @@ function M:setup(values)
     self._namespace = vim.api.nvim_create_namespace("ogmarks")
 end
 
+function M:createAutoCmds()
+    self._augroup = vim.api.nvim_create_augroup("ogmarks", {
+        clear = true,
+    })
+end
+
+function M:new(name)
+    log:assert(self:_isValidProjName(name), "Project name is invalid")
+    log:assert(not self:_projExists(name), "Project already exists")
+    local absPath = self:_createProjAbsPath(name)
+    log:info("Creating new project: %s", absPath)
+    self._project = self:_createBaseProjStruct(name)
+    local json = vim.json.encode(self._project)
+    local file, err = io.open(self:_createProjAbsPath(self._project.name), "w+")
+    local file = log:assert(file, "Failed to open file for new project: " .. (err or ""))
+    if not file then return end
+    file:write(json)
+    file:close()
+    self:load(name)
+end
+
+function M:mark()
+    log:assert(self._project, "ogmarks can only be created for active projects")
+    local newMark = self:_initMarkForCurPos()
+    log:debug("Creating mark %s:%d", newMark.absPath, newMark.row)
+    table.insert(self._project.ogmarks, newMark)
+    self:save()
+    self:loadMark(newMark.id)
+    return newMark
+end
+
+function M:save()
+    log:assert(self._project and self._project.name, "Invalid state: project must be open with valid name")
+    local file = log:assert(io.open(self:_createProjAbsPath(self._project.name), "w+"))
+    if not file then return end
+    local json = vim.json.encode(self._project)
+    file:write(json)
+    file:close()
+end
+
 function M:load(name)
     log:info("Loading project: %s", name)
-    log:assert(self:exists(name), "Project not found")
-    local text = self:_readFile(self:createProjectAbsPath(name))
+    log:assert(self:_projExists(name), "Project not found")
+    local text = self:_readFile(self:_createProjAbsPath(name))
     self._project = vim.json.decode(text)
 end
 
-function M:_readFile(file)
-    local f, err = io.open(file, "r")
-    log:assert(f, "Failed to open file: "..(err or ""))
-    f = f or {} -- satisfy diagnostic
-    local text = f:read("a")
-    f:close()
-    return text
+function M:bufLoad(bufId)
+    log:assert(self._project, "Project must be open")
+    local bufName = vim.api.nvim_buf_get_name(bufId)
+    local ogmarks = util.where(self._project.ogmarks, function(k, v)
+        return v.absPath == bufName
+    end)
+    for _, ogmark in pairs(ogmarks) do
+        vim.api.nvim_buf_set_extmark(bufId, self._namespace, ogmark.row, 0, {
+            id = ogmark.id,
+            sign_text = "🔖"
+        })
+    end
 end
 
 function M:delExtMark(id)
@@ -60,32 +105,7 @@ function M:delExtMarks()
     end)
 end
 
-function M:new(name)
-    log:assert(self:isValid(name), "Project name is invalid")
-    log:assert(not self:exists(name), "Project already exists")
-    local absPath = self:createProjectAbsPath(name)
-    log:info("Creating new project: %s", absPath)
-    self._project = self:baseProjectStrucure(name)
-    local json = vim.json.encode(self._project)
-    local file, err = io.open(self:createProjectAbsPath(self._project.name), "w+")
-    local file = log:assert(file, "Failed to open file for new project: " .. (err or ""))
-    if not file then return end
-    file:write(json)
-    file:close()
-    self:load(name)
-end
-
-function M:markHere()
-    log:assert(self._project, "ogmarks can only be created for active projects")
-    local newMark = self:_initializeMarkForCurPos()
-    log:debug("Creating mark %s:%d", newMark.absPath, newMark.row)
-    table.insert(self._project.ogmarks, newMark)
-    self:save()
-    self:createExtMark(newMark.id)
-    return newMark
-end
-
-function M:createExtMark(id)
+function M:loadMark(id)
     log:debug("Creating extmark for ogmark id=%d", id)
     log:assert(self._project, "Cannot create extmark when no project is active")
     assert(id > 0 and id <= #self._project.ogmarks, "id must be in the range [1, %d]", #self._project.ogmarks)
@@ -99,9 +119,18 @@ function M:createExtMark(id)
     })
 end
 
-function M:_initializeMarkForCurPos()
+function M:_readFile(file)
+    local f, err = io.open(file, "r")
+    log:assert(f, "Failed to open file: "..(err or ""))
+    f = f or {} -- satisfy diagnostic
+    local text = f:read("a")
+    f:close()
+    return text
+end
+
+function M:_initMarkForCurPos()
     local absPath, row, col = util.currentPosition()
-    local newMark = self:baseMark()
+    local newMark = self:_createBaseMarkStruct()
     newMark.row = row
     newMark.absPath = absPath
     newMark.rowText = vim.fn.getline(".")
@@ -109,7 +138,7 @@ function M:_initializeMarkForCurPos()
     return newMark
 end
 
-function M:baseMark()
+function M:_createBaseMarkStruct()
     local ts = util.timestamp()
     return {
         id = nil,
@@ -123,30 +152,21 @@ function M:baseMark()
     }
 end
 
-function M:isValid(name)
+function M:_isValidProjName(name)
     if name == nil or type(name) ~= "string" then return false end
     return string.match(name, NAME_PATTERN) ~= nil
 end
 
-function M:save()
-    log:assert(self._project and self._project.name, "Invalid state: project must be open with valid name")
-    local file = log:assert(io.open(self:createProjectAbsPath(self._project.name), "w+"))
-    if not file then return end
-    local json = vim.json.encode(self._project)
-    file:write(json)
-    file:close()
-end
-
-function M:exists(name)
-    local absPath = self:createProjectAbsPath(name)
+function M:_projExists(name)
+    local absPath = self:_createProjAbsPath(name)
     return util.exists(absPath)
 end
 
-function M:createProjectAbsPath(name)
+function M:_createProjAbsPath(name)
     return config.projectDir .. "/" .. name .. ".json"
 end
 
-function M:baseProjectStrucure(name)
+function M:_createBaseProjStruct(name)
     return {
         name = name,
         ogmarks = {},
@@ -154,28 +174,7 @@ function M:baseProjectStrucure(name)
     }
 end
 
-function M:loadForBuf(bufId)
-    log:assert(self._project, "Project must be open")
-    local bufName = vim.api.nvim_buf_get_name(bufId)
-    local ogmarks = util.where(self._project.ogmarks, function(k, v)
-        return v.absPath == bufName
-    end)
-    for _, ogmark in pairs(ogmarks) do
-        vim.api.nvim_buf_set_extmark(bufId, self._namespace, ogmark.row, 0, {
-            id = ogmark.id,
-            sign_text = "🔖"
-        })
-    end
-end
-
-function M:createAutoCmds()
-    self._augroup = vim.api.nvim_create_augroup("ogmarks", {
-        clear = true,
-    })
-end
-
 return M
-
 
 --[[
 LUA
@@ -211,6 +210,9 @@ LUA
     tags = {
         "config": { 1 },
         "main": { 1, 3 }
+    },
+    config = {
+
     }
 }
 
@@ -247,6 +249,9 @@ JSON
     "tags": {
         "config": [1],
         "main": [1, 3]
+    },
+    "config": {
+
     }
 }
 ]]
