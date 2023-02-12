@@ -1,6 +1,7 @@
 local ogmarks = require("ogmarks")
 local util = require("tests.util")
 local ogmarksUtil = require("ogmarks.util")
+local spy = require("luassert.spy")
 local vim = vim
 
 describe("marking lines", function ()
@@ -18,7 +19,7 @@ describe("marking lines", function ()
     ogmarksUtil.timestamp = function() return "42" end
     it("should create a mark at the current position", function ()
         util:openLorem(vim)
-        
+        local saveSpy = spy.on(ogmarks,"save")
         local mark = ogmarks:markHere()
         assert.are.same({
             id = 1,
@@ -33,5 +34,6 @@ describe("marking lines", function ()
 
         local extMarks = vim.api.nvim_buf_get_extmarks(0, ogmarks._namespace, 0, -1, {details = false})
         assert.are.same(1, #extMarks)
+        assert.spy(saveSpy).was.called()
     end)
 end)

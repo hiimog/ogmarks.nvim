@@ -67,6 +67,7 @@ function M:markHere()
     local newMark = self:_initializeMarkForCurPos()
     log:debug("Creating mark %s:%d", newMark.absPath, newMark.row)
     table.insert(self._project.ogmarks, newMark)
+    self:save()
     self:createExtMark(newMark.id)
     return newMark
 end

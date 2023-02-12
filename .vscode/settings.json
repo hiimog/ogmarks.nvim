@@ -3,6 +3,7 @@
         "vim",
         "describe",
         "it",
-        "before_each"
+        "before_each",
+        "spy"
     ]
 }
