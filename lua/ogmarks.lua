@@ -114,6 +114,7 @@ function M:loadMark(id)
         id = ogmark.id,
         sign_text = "🔖"
     })
+    vim.api.nvim_win_set_cursor(0, {ogmark.row + 1, 0})
     log:debug("Mark loaded: \n%s", vim.inspect(ogmark))
 end
 
