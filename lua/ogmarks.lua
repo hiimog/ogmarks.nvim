@@ -130,7 +130,7 @@ function M:exists(name)
 end
 
 function M:createProjectAbsPath(name)
-    return config.projectDir .. name .. ".json"
+    return config.projectDir .. "/" .. name .. ".json"
 end
 
 function M:baseProjectStrucure(name)
