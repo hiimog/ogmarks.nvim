@@ -64,8 +64,29 @@ end
 
 function M:markHere()
     log:assert(self._project, "ogmarks can only be created for active projects")
+    local newMark = self:_initializeMarkForCurPos()
+    log:debug("Creating mark %s:%d", newMark.absPath, newMark.row)
+    table.insert(self._project.ogmarks, newMark)
+    self:createExtMark(newMark.id)
+    return newMark
+end
+
+function M:createExtMark(id)
+    log:debug("Creating extmark for ogmark id=%d", id)
+    log:assert(self._project, "Cannot create extmark when no project is active")
+    assert(id > 0 and id <= #self._project.ogmarks, "id must be in the range [1, %d]", #self._project.ogmarks)
+    local ogmark = self._project.ogmarks[id]
+    assert(not ogmark.deleted, "Cannot create extmark for deleted ogmarks")
+    assert(util.exists(ogmark.absPath), "ogmark's file does not exist")
+    vim.cmd("edit " .. ogmark.absPath)
+    vim.api.nvim_buf_set_extmark(0, self._namespace, ogmark.row, 0, {
+        id = ogmark.id,
+        sign_text = "🔖"
+    })
+end
+
+function M:_initializeMarkForCurPos()
     local absPath, row, col = util.currentPosition()
-    log:info("Creating new ogmark in %s:(%d, %d)", absPath, row, col)
     local newMark = self:baseMark()
     newMark.row = row
     newMark.absPath = absPath

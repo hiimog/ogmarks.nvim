@@ -30,6 +30,8 @@ describe("marking lines", function ()
             created = "42",
             updated = "42"
         }, mark)
-        
+
+        local extMarks = vim.api.nvim_buf_get_extmarks(0, ogmarks._namespace, 0, -1, {details = false})
+        assert.are.same(1, #extMarks)
     end)
 end)
