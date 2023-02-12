@@ -6,11 +6,19 @@ local vim = vim
 describe("marking lines", function ()
     local config = util:defaultConfig("marking lines")
     ogmarks:setup(config)
+
+    it("should error if there is no active project", function ()
+        assert.has_error(function ()
+            ogmarks:markHere()
+        end, "ogmarks can only be created for active projects")
+    end)
+
     ogmarks:new("marking_lines")
+    local goodTimestamp = ogmarksUtil.timestamp
+    ogmarksUtil.timestamp = function() return "42" end
     it("should create a mark at the current position", function ()
         util:openLorem(vim)
-        local goodTimestamp = ogmarksUtil.timestamp
-        ogmarksUtil.timestamp = function() return "42" end
+        
         local mark = ogmarks:markHere()
         assert.are.same({
             id = 1,
@@ -22,5 +30,6 @@ describe("marking lines", function ()
             created = "42",
             updated = "42"
         }, mark)
+        
     end)
 end)
