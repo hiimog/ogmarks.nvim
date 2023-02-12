@@ -3,6 +3,7 @@ local util = require("tests.util")
 
 describe("project creation", function()
     local config = util:defaultConfig("project creation")
+    config.projectDir = "/tmp/"
     ogmarks:setup(config)
     local projectNameMustBeLike = "can only contain alpha numeric, '-' and '_' characters"
     it("should error if invalid name is given", function()
@@ -25,5 +26,12 @@ describe("project creation", function()
     it("should error if trying to create a new project with a duplicate name", function()
         ogmarks:new("foo")
         assert.has_error(function() ogmarks:new("foo") end, "Project already exists")
+    end)
+
+    it("should create project files in the configured directory", function() 
+        ogmarks:new("bar")
+        local file = io.open("/tmp/bar.json", "r")
+        assert.not_nil(file, "File not found")
+        file:close()
     end)
 end)
