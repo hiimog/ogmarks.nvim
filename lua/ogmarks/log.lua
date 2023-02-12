@@ -1,6 +1,9 @@
 local config = require("ogmarks.config")
 local util = require("ogmarks.util")
-local M = {}
+local M = {
+    _file = nil,
+    _level = nil,
+}
 
 local levels = {
     debug = 1,
@@ -10,13 +13,12 @@ local levels = {
     off = 5
 }
 
-M.level = "debug"
-
 local function makeLogFunc(level)
     return function(self, msg, ...)
-        if levels[level] < levels[M.level] then return end
+        if levels[level] < levels[self._level] then return end
         local body = string.format(msg, ...)
         self._file:write(level .. ":" .. util.timestamp() .. ":" .. body .. "\n")
+        self._file:flush()
     end
 end
 
@@ -27,7 +29,7 @@ M.error = makeLogFunc("error")
 
 function M:setLevel(level)
     assert(levels[level], string.format("Invalid log level: %s", level))
-    self.level = level
+    self._level = level
 end
 
 function M:assert(condition, errMsg)
@@ -39,6 +41,7 @@ end
 
 function M:init()
     self._file = assert(io.open(config.logging.file, "a"))
+    self._level = config.logging.level
 end
 
 return M

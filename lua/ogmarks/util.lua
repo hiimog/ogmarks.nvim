@@ -25,10 +25,11 @@ function M.forEachBuf(func)
     end
 end
 
-function M.currentPosition()
+-- return (0-indexed) absolute path, row, col
+function M.getCursor()
     local file = vim.api.nvim_buf_get_name(0)
-    local row, col = table.unpack(vim.api.nvim_win_get_position(0))
-    return file, row, col
+    local row, col = table.unpack(vim.api.nvim_win_get_cursor(0))
+    return file, row - 1, col
 end
 
 function M.where(tbl, func)

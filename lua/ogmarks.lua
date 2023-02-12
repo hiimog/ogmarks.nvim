@@ -5,7 +5,8 @@ local util = require("ogmarks.util")
 local M = {
     _project = nil,
     _namespace = nil,
-    _augroup = nil
+    _augroup = nil,
+    _projectPath = nil
 }
 
 -- handle >5.1 unpack deprecation
@@ -15,7 +16,7 @@ table.unpack = table.unpack or unpack
 local NAME_PATTERN = "^[a-zA-Z0-9_-]+$"
 
 function M:setup(values)
-    if values == nil then return end
+    values = values or {}
     assert(type(values) == "table", "values must be a table")
     values.logging = values.logging or {}
     if values.logging.level ~= nil then config.logging.level = values.logging.level end
@@ -33,19 +34,14 @@ function M:createAutoCmds()
     })
 end
 
-function M:new(name)
+function M:new(name, opts)
+    opts = opts or {}
     log:assert(self:_isValidProjName(name), "Project name is invalid")
     log:assert(not self:_projExists(name), "Project already exists")
-    local absPath = self:_createProjAbsPath(name)
-    log:info("Creating new project: %s", absPath)
+    self._projectPath = self:_createProjAbsPath(name)
+    log:info("Creating new project: %s", self._projectPath)
     self._project = self:_createBaseProjStruct(name)
-    local json = vim.json.encode(self._project)
-    local file, err = io.open(self:_createProjAbsPath(self._project.name), "w+")
-    local file = log:assert(file, "Failed to open file for new project: " .. (err or ""))
-    if not file then return end
-    file:write(json)
-    file:close()
-    self:load(name)
+    self:save()
 end
 
 function M:mark()
@@ -59,11 +55,12 @@ function M:mark()
 end
 
 function M:save()
-    log:assert(self._project and self._project.name, "Invalid state: project must be open with valid name")
-    local file = log:assert(io.open(self:_createProjAbsPath(self._project.name), "w+"))
+    log:assert(self._project, "Cannot save when no project is open or project name is deleted")
+    local file, err = io.open(self._projectPath, "w+")
+    log:assert(file ~= nil, "Failed to open project file for saving: " .. (err or ""))
     if not file then return end
-    local json = vim.json.encode(self._project)
-    file:write(json)
+    file:write(self:_createProjJson())
+    file:flush()
     file:close()
 end
 
@@ -106,7 +103,7 @@ function M:delExtMarks()
 end
 
 function M:loadMark(id)
-    log:debug("Creating extmark for ogmark id=%d", id)
+    log:debug("Loading mark id=%d", id)
     log:assert(self._project, "Cannot create extmark when no project is active")
     assert(id > 0 and id <= #self._project.ogmarks, "id must be in the range [1, %d]", #self._project.ogmarks)
     local ogmark = self._project.ogmarks[id]
@@ -117,19 +114,20 @@ function M:loadMark(id)
         id = ogmark.id,
         sign_text = "🔖"
     })
+    log:debug("Mark loaded: \n%s", vim.inspect(ogmark))
 end
 
 function M:_readFile(file)
     local f, err = io.open(file, "r")
     log:assert(f, "Failed to open file: "..(err or ""))
     f = f or {} -- satisfy diagnostic
-    local text = f:read("a")
+    local text = f:read("*a")
     f:close()
     return text
 end
 
 function M:_initMarkForCurPos()
-    local absPath, row, col = util.currentPosition()
+    local absPath, row, col = util.getCursor()
     local newMark = self:_createBaseMarkStruct()
     newMark.row = row
     newMark.absPath = absPath
@@ -170,8 +168,14 @@ function M:_createBaseProjStruct(name)
     return {
         name = name,
         ogmarks = {},
-        tags = {}
+        tags = {},
+        config = {}
     }
+end
+
+function M:_createProjJson()
+    log:assert(self._project, "Cannot create project json when project isn't open")
+    return vim.json.encode(self._project)
 end
 
 return M
