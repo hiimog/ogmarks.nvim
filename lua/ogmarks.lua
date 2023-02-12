@@ -30,8 +30,8 @@ end
 
 function M:createAutoCmds()
     self._augroup = vim.api.nvim_create_augroup("ogmarks", {
-        clear = true,
-    })
+            clear = true,
+        })
 end
 
 function M:new(name, opts)
@@ -75,8 +75,8 @@ function M:bufLoad(bufId)
     log:assert(self._project, "Project must be open")
     local bufName = vim.api.nvim_buf_get_name(bufId)
     local ogmarks = util.where(self._project.ogmarks, function(k, v)
-        return v.absPath == bufName
-    end)
+            return v.absPath == bufName
+        end)
     for _, ogmark in pairs(ogmarks) do
         vim.api.nvim_buf_set_extmark(bufId, self._namespace, ogmark.row, 0, {
             id = ogmark.id,
@@ -86,14 +86,14 @@ function M:bufLoad(bufId)
 end
 
 function M:delExtMark(id)
-    util.forEachBuf(function (bufId)
+    util.forEachBuf(function(bufId)
         vim.api.nvim_buf_del_extmark(bufId, self._namespace, id)
     end)
 end
 
 function M:delExtMarks()
-    util.forEachBuf(function (bufId)
-        local extMarks = vim.api.nvim_buf_get_extmarks(bufId, self._namespace, 0, -1, {details = false})
+    util.forEachBuf(function(bufId)
+        local extMarks = vim.api.nvim_buf_get_extmarks(bufId, self._namespace, 0, -1, { details = false })
         for _, tuple in ipairs(extMarks) do
             local id, row, col = table.unpack(tuple)
             log:debug("Deleting extmark buf=%d id=%d row=%d col=%d", bufId, id, row, col)
@@ -114,13 +114,13 @@ function M:loadMark(id)
         id = ogmark.id,
         sign_text = "🔖"
     })
-    vim.api.nvim_win_set_cursor(0, {ogmark.row + 1, 0})
+    vim.api.nvim_win_set_cursor(0, { ogmark.row + 1, 0 })
     log:debug("Mark loaded: \n%s", vim.inspect(ogmark))
 end
 
 function M:_readFile(file)
     local f, err = io.open(file, "r")
-    log:assert(f, "Failed to open file: "..(err or ""))
+    log:assert(f, "Failed to open file: " .. (err or ""))
     f = f or {} -- satisfy diagnostic
     local text = f:read("*a")
     f:close()
@@ -177,6 +177,39 @@ end
 function M:_createProjJson()
     log:assert(self._project, "Cannot create project json when project isn't open")
     return vim.json.encode(self._project)
+end
+
+function M:_updateBufMarksPos(bufId)
+    bufId = bufId or 0
+    log:assert(self._project, "Cannot update buffer ogmarks when no project is open")
+    local absPath = vim.api.nvim_buf_get_name(bufId)
+    log:assert(absPath ~= "", "Cannot update buffer ogmarks for buffer with no backing file")
+    local bufExtMarks = vim.api.nvim_buf_get_extmarks(bufId, self._namespace, 0, -1, {})
+    for _, extMark in ipairs(bufExtMarks) do
+        local id, row, col = table.unpack(extMark)
+        local ogmark = self._project.ogmarks[id]
+        log:assert(ogmark, "ExtMark id=%d found without corresponding ogmark", id)
+        ogmark.row = row
+        ogmark.rowText = vim.api.nvim_buf_get_lines(bufId, row, row+1, false)[1]
+        ogmark.updated = util.timestamp()
+    end
+end
+
+function M:_updateAllMarkPos()
+    log:assert(self._project, "Cannot update mark positions when no project is open")
+    for _, ogmark in ipairs(self._project.ogmarks) do
+        vim.cmd("edit " .. ogmark.absPath)
+        local extmark = vim.api.nvim_buf_get_extmark_by_id(0, self._namespace, ogmark.id, {})
+        if #extmark == 0 then
+            log:warn("ogmark id=%d did not have corresponding extmark - this is potentially because of data corruption")
+        else
+            local row, col = table.unpack(extmark)
+            local rowText = vim.fn.getline(row + 1)
+            log:debug("Updating ogmark id=%d to have row=%d and rowText=%s", ogmark.id, row, rowText)
+            ogmark.row = row
+            ogmark.rowText = rowText
+        end
+    end
 end
 
 return M

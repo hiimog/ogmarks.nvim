@@ -32,9 +32,10 @@ function M:setLevel(level)
     self._level = level
 end
 
-function M:assert(condition, errMsg)
+function M:assert(condition, errMsg, ...)
     if not condition then 
-        self:error(errMsg)
+        self:error(errMsg, ...)
+        errMsg = string.format(errMsg, ...)
         assert(condition, errMsg)
     end
 end
