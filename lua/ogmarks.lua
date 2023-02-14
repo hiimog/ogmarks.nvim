@@ -45,9 +45,19 @@ function M:createAutoCmds()
     ]]
     vim.api.nvim_create_autocmd({"BufReadPost"}, {
         pattern = "*",
+        group = self._augroup,
+        desc = "Load ogmarks for the file that is being opened",
         callback = function(event)
-            log:debug("BufReadPost: \n%s", vim.inspect(event))
-            self:bufLoad(event.buf)
+            self:loadBufMarks(event.buf)
+        end
+    })
+    vim.api.nvim_create_autocmd({"BufWritePost"}, {
+        pattern = "*",
+        group = self._augroup,
+        desc = "Save ogmarks that may have changed position on the buffer being saved",
+        callback = function(event)
+            self:updateBufMarks(event.buf)
+            self:save()
         end
     })
 end
@@ -89,7 +99,7 @@ function M:loadProj(name)
     self._project = vim.json.decode(text)
 end
 
-function M:bufLoad(bufId)
+function M:loadBufMarks(bufId)
     log:assert(self._project, "Project must be open")
     local bufName = vim.api.nvim_buf_get_name(bufId)
     local ogmarks = util.where(self._project.ogmarks, function(k, v)
@@ -145,6 +155,23 @@ function M:_readFile(file)
     return text
 end
 
+function M:updateBufMarks(bufId)
+    bufId = bufId or 0
+    log:assert(self._project, "Cannot update buffer ogmarks when no project is open")
+    local absPath = vim.api.nvim_buf_get_name(bufId)
+    log:assert(absPath ~= "", "Cannot update buffer ogmarks for buffer with no backing file")
+    log:info("Updating ogmarks for buf id=%d file=%s", bufId, absPath)
+    local bufExtMarks = vim.api.nvim_buf_get_extmarks(bufId, self._namespace, 0, -1, {})
+    for _, extMark in ipairs(bufExtMarks) do
+        local id, row, col = table.unpack(extMark)
+        local ogmark = self._project.ogmarks[id]
+        log:assert(ogmark, "ExtMark id=%d found without corresponding ogmark", id)
+        ogmark.row = row
+        ogmark.rowText = vim.api.nvim_buf_get_lines(bufId, row, row+1, false)[1]
+        ogmark.updated = util.timestamp()
+    end
+end
+
 function M:_initMarkForCurPos()
     local absPath, row, col = util.getCursor()
     local newMark = self:_createBaseMarkStruct()
@@ -195,22 +222,6 @@ end
 function M:_createProjJson()
     log:assert(self._project, "Cannot create project json when project isn't open")
     return vim.json.encode(self._project)
-end
-
-function M:_updateBufMarksPos(bufId)
-    bufId = bufId or 0
-    log:assert(self._project, "Cannot update buffer ogmarks when no project is open")
-    local absPath = vim.api.nvim_buf_get_name(bufId)
-    log:assert(absPath ~= "", "Cannot update buffer ogmarks for buffer with no backing file")
-    local bufExtMarks = vim.api.nvim_buf_get_extmarks(bufId, self._namespace, 0, -1, {})
-    for _, extMark in ipairs(bufExtMarks) do
-        local id, row, col = table.unpack(extMark)
-        local ogmark = self._project.ogmarks[id]
-        log:assert(ogmark, "ExtMark id=%d found without corresponding ogmark", id)
-        ogmark.row = row
-        ogmark.rowText = vim.api.nvim_buf_get_lines(bufId, row, row+1, false)[1]
-        ogmark.updated = util.timestamp()
-    end
 end
 
 function M:_updateAllMarkPos()
