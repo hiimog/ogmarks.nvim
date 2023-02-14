@@ -252,7 +252,7 @@ function M:_updateAllMarkPos()
 end
 
 function M:_newProjCmd(info)
-    log:info("New project command: \n%s", vim.inspect(info))
+    
 end
 
 return M
