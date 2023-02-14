@@ -32,6 +32,24 @@ function M:createAutoCmds()
     self._augroup = vim.api.nvim_create_augroup("ogmarks", {
             clear = true,
         })
+    
+    --[[
+{
+  buf = 2,
+  event = "BufReadPost",
+  file = "/tmp/ogmarks.log",
+  id = 5,
+  match = "/tmp/ogmarks.log"
+}
+
+    ]]
+    vim.api.nvim_create_autocmd({"BufReadPost"}, {
+        pattern = "*",
+        callback = function(event)
+            log:debug("BufReadPost: \n%s", vim.inspect(event))
+            self:bufLoad(event.buf)
+        end
+    })
 end
 
 function M:new(name, opts)
