@@ -22,6 +22,7 @@ function M:setup(values)
     if values.logging.level ~= nil then config.logging.level = values.logging.level end
     if values.logging.file ~= nil then config.logging.file = values.logging.file end
     if values.projectDir ~= nil then config.projectDir = values.projectDir end
+    if values.cmdPrefix ~= nil then config.cmdPrefix = values.cmdPrefix end
     log:init()
     log:info("ogmarks starting")
     util.mkDir(config.projectDir)
@@ -62,7 +63,16 @@ function M:createAutoCmds()
     })
 end
 
-function M:new(name, opts)
+function M:createUserCmds()
+    log:info("Creating user commands")
+    vim.api.nvim_create_user_command(config.cmdPrefix.."NewProj", function(info)
+        self:_newProjCmd(info)
+    end, {
+        nargs="1"
+    })
+end
+
+function M:newProj(name, opts)
     opts = opts or {}
     log:assert(self:_isValidProjName(name), "Project name is invalid")
     log:assert(not self:_projExists(name), "Project already exists")
@@ -72,13 +82,13 @@ function M:new(name, opts)
     self:save()
 end
 
-function M:mark()
+function M:newMark()
     log:assert(self._project, "ogmarks can only be created for active projects")
     local newMark = self:_initMarkForCurPos()
     log:debug("Creating mark %s:%d", newMark.absPath, newMark.row)
     table.insert(self._project.ogmarks, newMark)
-    self:save()
-    self:loadMark(newMark.id)
+    --self:save()
+    --self:loadMark(newMark.id)
     return newMark
 end
 
@@ -239,6 +249,10 @@ function M:_updateAllMarkPos()
             ogmark.rowText = rowText
         end
     end
+end
+
+function M:_newProjCmd(info)
+    log:info("New project command: \n%s", vim.inspect(info))
 end
 
 return M

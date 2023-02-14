@@ -11,17 +11,17 @@ describe("marking lines", function ()
 
     it("should error if there is no active project", function ()
         assert.has_error(function ()
-            ogmarks:mark()
+            ogmarks:newMark()
         end, "ogmarks can only be created for active projects")
     end)
 
-    ogmarks:new("marking_lines")
+    ogmarks:newProj("marking_lines")
     local goodTimestamp = ogmarksUtil.timestamp
     ogmarksUtil.timestamp = function() return "42" end
     it("should create a mark at the current position", function ()
         util:openLorem(vim)
         local saveSpy = spy.on(ogmarks,"save")
-        local mark = ogmarks:mark()
+        local mark = ogmarks:newMark()
         assert.are.same({
             id = 1,
             absPath = "/src/ogmarks.nvim/tests/text/lorem.txt",
