@@ -4,7 +4,7 @@ function M.timestamp()
     return os.date("%Y%m%d%H%M%S")
 end
 
-function M.exists(file)
+function M.fileExists(file)
     local file = io.open(file, "r")
     if file then
         file:close()
