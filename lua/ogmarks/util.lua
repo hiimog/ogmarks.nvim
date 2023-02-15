@@ -40,4 +40,20 @@ function M.where(tbl, func)
     return res
 end
 
+function M.count(tbl, func)
+    local cnt = 0
+    for key, value in pairs(tbl) do
+        if func(key, value) then cnt = cnt + 1 end
+    end
+    return cnt
+end
+
+function M.map(tbl, func)
+    local res = {}
+    for key, value in pairs(tbl) do
+        res[key] = func(key, value)
+    end
+    return res
+end
+
 return M
