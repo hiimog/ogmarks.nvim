@@ -21,6 +21,19 @@ local schemaSetup = s.Record {
     })
 }
 
+function M:augroupCreate()
+    self._augroupId = vim.api.nvim_create_augroup("ogmarks", { clear = true})
+end
+
+function M:commandsCreate()
+    vim.api.nvim_create_user_command(config.commandPrefix.."ProjectCreate", function (event)
+        self:cmdProjectCreate(event)
+    end, {
+        desc = "Create a new project",
+        nargs = 1,
+    })
+end
+
 function M:iter()
     local source = {}
     if self._project then source = self._project.ogmarks end
@@ -64,6 +77,8 @@ function M:setup(cfg)
     self._namespaceId = vim.api.nvim_create_namespace("ogmarks")
     util.mkDir(config.projectDir)
     log:init() -- can use logging after this
+    self:commandsCreate()
+    self:augroupCreate()
 end
 
 function M:cmdProjectCreate(event)
@@ -114,7 +129,9 @@ function M:_nuke()
         local isGood, err = pcall(function() vim.api.nvim_win_close(winId, true) end)
         if not isGood and string.find(err or "", "Cannot close last window") ~= nil then return end
     end)
-    
+
+    vim.api.nvim_del_user_command(config.commandPrefix.."ProjectCreate")
+
     self._augroupId = nil 
     self._namespaceId = nil
     self._projFile = nil
