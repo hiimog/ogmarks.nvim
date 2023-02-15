@@ -8,6 +8,8 @@ local argparse = require("lua.thirdparty.argparse")
 local M = {
     _project = nil,
     _projectFile = nil,
+    _namespaceId = nil,
+    _augroupId = nil
 }
 
 local schemaProjName = s.Pattern("^[a-zA-Z0-9_-]+$")
@@ -59,6 +61,7 @@ function M:setup(cfg)
     if cfg.projectDir then config.projectDir = cfg.projectDir end
     if cfg.logging.file then config.logging.file = cfg.logging.file end
     if cfg.logging.level then config.logging.level = cfg.logging.level end
+    self._namespaceId = vim.api.nvim_create_namespace("ogmarks")
     util.mkDir(config.projectDir)
     log:init() -- can use logging after this
 end
@@ -92,6 +95,31 @@ function M:_cmdProjectCreateParseArgs(args)
     local helpText = parser:get_usage()
     log:assert(isParsed, "Error parsing arguments: %s\n%s", parsedOrError, helpText)
     return parsedOrError
+end
+
+function M:_nuke()
+    if self._augroupId then
+        -- delete all commands
+        vim.api.nvim_del_augroup_by_id(self._augroupId)
+    end
+
+    util.forEachBuf(function(bufId)
+        -- delete all extmarks and highlights and force close the buffer
+        if not self._namespaceId then return end
+        vim.api.nvim_buf_clear_namespace(bufId, self._namespaceId, 0, -1)
+        vim.api.nvim_buf_delete(bufId, {force=true})
+    end)
+
+    util.forEachWin(function(winId)
+        local isGood, err = pcall(function() vim.api.nvim_win_close(winId, true) end)
+        if not isGood and string.find(err or "", "Cannot close last window") ~= nil then return end
+    end)
+    
+    self._augroupId = nil 
+    self._namespaceId = nil
+    self._projFile = nil
+    self._project = nil
+    log:dispose()
 end
 
 function M:_projToJson()

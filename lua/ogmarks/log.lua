@@ -50,4 +50,11 @@ function M:init()
     self._level = config.logging.level
 end
 
+function M:dispose()
+    if not self._file then return end
+    self._file:close()
+    self._file = nil
+    self:setLevel("off")
+end
+
 return M

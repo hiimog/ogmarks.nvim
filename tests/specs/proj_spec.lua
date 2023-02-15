@@ -15,7 +15,13 @@ describe("project create", function ()
         assert.is_true(exists)
     end)
 
-    it("should error if creating a new project with the same name as an existing project", function ()
-        
+    ogmarks:_nuke()
+
+    it("should error if trying to create a duplicate project", function ()
+        assert.has.error(function()
+            ogmarks:cmdProjectCreate({
+                fargs = {"test"}
+            })
+        end, "Project already exists")
     end)
 end)

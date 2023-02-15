@@ -19,10 +19,30 @@ function M.mkDir(dir)
 end
 
 function M.forEachBuf(func)
+    local res = {}
     local bufIds = vim.api.nvim_list_bufs()
     for _, bufId in ipairs(bufIds) do
-        func(bufId)
+        res[bufId] = func(bufId)
     end
+    return res
+end
+
+function M.forEachTab(func)
+    local tabIds = vim.api.nvim_list_tabpages()
+    local res = {}
+    for _, tabId in ipairs(tabIds) do
+        res[tabId] = func(tabId)
+    end
+    return res
+end
+
+function M.forEachWin(func)
+    local winIds = vim.api.nvim_list_wins()
+    local res = {}
+    for _, winId in ipairs(winIds) do
+        res[winId] = func(winId)
+    end
+    return res
 end
 
 -- return (0-indexed) absolute path, row, col
