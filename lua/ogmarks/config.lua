@@ -5,6 +5,6 @@ M.logging = {
     file = "/tmp/ogmarks.log"
 }
 M.projectDir = vim.fn.stdpath("data") .. "/ogmarks"
-M.cmdPrefix = "OgMarks"
+
 
 return M

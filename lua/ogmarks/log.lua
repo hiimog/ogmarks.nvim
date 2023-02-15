@@ -16,7 +16,12 @@ local levels = {
 local function makeLogFunc(level)
     return function(self, msg, ...)
         if levels[level] < levels[self._level] then return end
-        local body = string.format(msg, ...)
+        local body = nil 
+        if type(msg) == "function" then 
+            body = msg()
+        else 
+            body = string.format(msg, ...)
+        end
         self._file:write(level .. ":" .. util.timestamp() .. ":" .. body .. "\n")
         self._file:flush()
     end
