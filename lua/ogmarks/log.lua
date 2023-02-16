@@ -40,6 +40,9 @@ end
 function M:assert(condition, errMsg, ...)
     if not condition then 
         self:error(errMsg, ...)
+        if type(errMsg) == "function" then
+            errMsg = errMsg()
+        end
         errMsg = string.format(errMsg, ...)
         assert(condition, errMsg)
     end

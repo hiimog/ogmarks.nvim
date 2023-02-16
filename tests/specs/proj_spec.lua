@@ -24,4 +24,9 @@ describe("project create", function ()
             return string.find(err, "Project already exists") ~= nil
         end)
     end)
+
+    -- it("should load an existing project by name", function ()
+    --     vim.cmd("OgMarksProjectLoad test")
+    --     assert.not_nil(ogmarks._projFile)
+    -- end)
 end)

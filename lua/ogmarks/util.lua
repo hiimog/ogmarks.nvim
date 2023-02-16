@@ -76,4 +76,9 @@ function M.map(tbl, func)
     return res
 end
 
+-- 0 indexed
+function M.getLine(bufId, line)
+    return vim.api.nvim_buf_get_lines(bufId, line, line+1, true)
+end
+
 return M

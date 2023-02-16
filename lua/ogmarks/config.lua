@@ -6,6 +6,7 @@ local M =  {
     },
     projectDir = vim.fn.stdpath("data") .. "/ogmarks",
     commandPrefix = "OgMarks",
+    icon = "📌",
 }
 
 return M
