@@ -29,6 +29,7 @@ WORKDIR /home/developer
 RUN sudo apt-get -qq update && sudo apt-get -qq install \
     build-essential     \
     git                 \
+    jq                  \
     libreadline-dev     \
     libsqlite3-dev      \
     lua5.1              \

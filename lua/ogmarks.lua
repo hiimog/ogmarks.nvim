@@ -22,13 +22,13 @@ local schemaSetup = s.Record {
 }
 
 function M:augroupCreate()
-    self._augroupId = vim.api.nvim_create_augroup("ogmarks", { clear = true})
+    self._augroupId = vim.api.nvim_create_augroup("ogmarks", { clear = true })
     vim.api.nvim_create_autocmd("BufReadPost", {
         group = self._augroupId,
         desc = "Set extmarks when file is opened",
         callback = function(event)
             if not self._proj then return end
-            self:_bufLoadMarks(event.buf)
+            self:_bufSetExtMarks(event.buf)
         end
     })
     vim.api.nvim_create_autocmd("BufWritePost", {
@@ -43,18 +43,18 @@ function M:augroupCreate()
 end
 
 function M:commandsCreate()
-    vim.api.nvim_create_user_command(config.commandPrefix.."ProjectCreate", function (event)
+    vim.api.nvim_create_user_command(config.commandPrefix .. "ProjectCreate", function(event)
         self:cmdProjectCreate(event)
     end, {
         desc = "Create a new project",
-        nargs = 1,
+        nargs = "*",
         force = true,
     })
-    vim.api.nvim_create_user_command(config.commandPrefix.."ProjectLoad", function(event)
+    vim.api.nvim_create_user_command(config.commandPrefix .. "ProjectLoad", function(event)
         self:cmdProjectLoad(event)
     end, {
         desc = "Load a project from disk",
-        nargs = 1,
+        nargs = "*",
         force = true,
     })
 end
@@ -78,13 +78,17 @@ end
 function M:projExists(name)
     self:_validateProjName(name)
     local path = self:_projFileName(name)
-    return util.fileExists(path)
+    local res = util.fileExists(path)
+    local trueFalse = "false"
+    if res then trueFalse = "true" end
+    log:debug("Project exists: %s\n%s\n%s = %s", util.pwd(), name, path, trueFalse)
+    return res
 end
 
 function M:projSave()
     self:_validateProjActive()
     local file, err = io.open(self._projFile, "w+")
-    log:assert(file, function() return "Failed to open project file for writing: "..err end)
+    log:assert(file, function() return "Failed to open project file for writing: " .. err end)
     if not file then return end
     local json = self:_projToJson()
     file:write(json)
@@ -102,6 +106,7 @@ function M:setup(cfg)
     self._namespaceId = vim.api.nvim_create_namespace("ogmarks")
     util.mkDir(config.projectDir)
     log:init() -- can use logging after this
+    log:debug("Final config: %s", vim.inspect(config))
     self:commandsCreate()
     self:augroupCreate()
 end
@@ -117,10 +122,20 @@ function M:cmdProjectCreate(event)
 end
 
 function M:cmdProjectLoad(event)
+    log:debug(function() return "Project creation event:\n"..vim.json.encode(event) end)
     local parsed = self:_cmdProjectLoadParseArgs(event.fargs)
+    log:debug("Parsed load args:\n%s", vim.inspect(parsed))
     self:_projLoad(parsed.name)
-    util.forEachBuf(function (bufId)
-        self:_bufLoadMarks(bufId)
+    if parsed.openall then
+        local seen = {}
+        self:iter():each(function(ogmark)
+            if seen[ogmark.absPath] then return end
+            seen[ogmark.absPath] = true
+            vim.cmd("edit " .. ogmark.absPath)
+        end)
+    end
+    util.forEachBuf(function(bufId)
+        self:_bufSetExtMarks(bufId)
     end)
 end
 
@@ -133,18 +148,18 @@ end
 --function M:cmdMarkTag foo bar biz baz
 --function M:cmdMarkDelete
 --function M:cmdMarkAnnotate this is more information about the mark
- 
 
-function M:_bufLoadMarks(bufId)
+
+function M:_bufSetExtMarks(bufId)
     local file = vim.api.nvim_buf_get_name(bufId)
-    if file == "" then 
+    if file == "" then
         log:debug("Buffer is not backed by a file id=%d", bufId)
         return
     end
     self:iter()
         :filter(function(ogmark) return ogmark.absPath == file end)
-        :foreach(function (ogmark)
-            log:debug("Setting ogmark id=%d for buffer id=%d", ogmark.id, bufId)
+        :foreach(function(ogmark)
+            log:debug("Setting extmark for ogmark id=%d for buffer id=%d", ogmark.id, bufId)
             self:_setExtMark(bufId, ogmark)
         end)
 end
@@ -155,7 +170,7 @@ function M:_bufUpdateMarks(bufId)
     if file == "" then return end
     self:iter()
         :filter(function(ogmark) return ogmark.absPath == file end)
-        :foreach(function (ogmark)
+        :foreach(function(ogmark)
             local extmark = vim.api.nvim_buf_get_extmark_by_id(bufId, self._namespaceId, ogmark.id, {})
             if #extmark == 0 then
                 log:warn("Failed to find ogmark id=%d on buf id=%d for file=%s", ogmark.id, bufId, file)
@@ -187,6 +202,7 @@ end
 
 function M:_cmdProjectLoadParseArgs(args)
     local parser = argparse("ProjectLoad")
+    parser:flag("-o --openall")
     parser:argument("name", "name of the project"):args(1)
     local isParsed, parsedOrError = parser:pparse(args)
     local helpText = parser:get_usage()
@@ -198,17 +214,17 @@ end
 -- loads the file from disk and parses it setting up the project fields
 function M:_projLoad(name)
     self:_validateProjName(name)
-    if name == (self._proj or {}).name then 
+    if name == (self._proj or {}).name then
         log:debug("Attempt to reopen the current project: %s", name)
         return
     end
     log:assert(self:projExists(name), "Project does not exist")
     self._projFile = self:_projFileName(name)
-    local isGood, err = pcall(function ()
+    local isGood, err = pcall(function()
         self._proj = self:_projFromFile(self._projFile)
     end)
     if not isGood then
-        self._projFile = nil 
+        self._projFile = nil
         self._proj = nil
     end
 end
@@ -223,7 +239,7 @@ function M:_nuke()
         -- delete all extmarks and highlights and force close the buffer
         if not self._namespaceId then return end
         vim.api.nvim_buf_clear_namespace(bufId, self._namespaceId, 0, -1)
-        vim.api.nvim_buf_delete(bufId, {force=true})
+        vim.api.nvim_buf_delete(bufId, { force = true })
     end)
 
     util.forEachWin(function(winId)
@@ -231,9 +247,9 @@ function M:_nuke()
         if not isGood and string.find(err or "", "Cannot close last window") ~= nil then return end
     end)
 
-    vim.api.nvim_del_user_command(config.commandPrefix.."ProjectCreate")
+    vim.api.nvim_del_user_command(config.commandPrefix .. "ProjectCreate")
 
-    self._augroupId = nil 
+    self._augroupId = nil
     self._namespaceId = nil
     self._projFile = nil
     self._proj = nil
@@ -258,8 +274,10 @@ end
 
 function M:_projFileName(name)
     self:_validateProjName(name)
-    if config.projectDir:sub(#config.projectDir) == "/" then return config.projectDir..name..".json" end
-    return config.projectDir.."/"..name..".json"
+    if config.projectDir:sub(#config.projectDir) == "/" then
+        return config.projectDir .. name .. ".json"
+    end
+    return config.projectDir .. "/" .. name .. ".json"
 end
 
 function M:_validateProjName(name)
@@ -271,6 +289,5 @@ function M:_validateProjActive()
     log:assert(self._proj, "No active project")
     log:assert(self._projFile, "Project exists, but no filename -this is a bug")
 end
-
 
 return M

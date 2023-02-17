@@ -31,4 +31,14 @@ describe("project create", function ()
         assert.are.same("test", ogmarks._proj.name)
         assert.are.same("/tmp/test.json", ogmarks._projFile)
     end)
+    
+    ogmarks:_nuke()
+    cfg.projectDir = "/src/ogmarks.nvim/tests/dummy/"
+    ogmarks:setup(cfg)
+
+    it("should open all ogmarks in a project if using --openall", function ()
+        vim.cmd("OgMarksProjectLoad --openall multifile")
+        local bufCount = #vim.api.nvim_list_bufs()
+        assert.are.same(bufCount, 2)
+    end)
 end)

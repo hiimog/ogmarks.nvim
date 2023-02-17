@@ -81,4 +81,10 @@ function M.getLine(bufId, line)
     return vim.api.nvim_buf_get_lines(bufId, line, line+1, true)
 end
 
+function M.pwd()
+    local proc = assert(io.popen("pwd", "r"))
+    local res = proc:read("a")
+    return res
+end
+
 return M

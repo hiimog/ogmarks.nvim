@@ -1,0 +1,27 @@
+{
+    "name": "mutilfile",
+    "ogmarks": [
+        {
+            "id": 1,
+            "absPath": "/src/ogmarks.nvim/tests/text/ll.txt",
+            "name": "tests",
+            "description": "The tests row",
+            "row": 1,
+            "rowText": "drwxrwxr-x 5 og og 4.0K Jan 30 21:34 tests/",
+            "created": "42",
+            "updated": "42"
+        },
+        {
+            "id": 2,
+            "absPath": "/src/ogmarks.nvim/tests/text/lorem.txt",
+            "name": "long",
+            "description": "The longest row",
+            "row": 17,
+            "rowText": "putent option graecis ex qui, etiam omittam usu in. Mea brute integre ut, cetero suscipit dissentiet eos et. At legimus elaboraret vim. In viris lobortis pro, vim ea veritus argumentum.",
+            "created": "42",
+            "updated": "42"
+        }
+    ],
+    "tags": [],
+    "settings": {}
+}
