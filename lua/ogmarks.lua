@@ -48,12 +48,14 @@ function M:commandsCreate()
     end, {
         desc = "Create a new project",
         nargs = 1,
+        force = true,
     })
     vim.api.nvim_create_user_command(config.commandPrefix.."ProjectLoad", function(event)
         self:cmdProjectLoad(event)
     end, {
         desc = "Load a project from disk",
         nargs = 1,
+        force = true,
     })
 end
 
@@ -105,7 +107,6 @@ function M:setup(cfg)
 end
 
 function M:cmdProjectCreate(event)
-    log:assert(self._proj == nil, "Save any open buffers and restart nvim to create a new project")
     local parsed = self:_cmdProjectCreateParseArgs(event.fargs)
     local name = parsed.name
     self:_validateProjName(name)
@@ -116,7 +117,6 @@ function M:cmdProjectCreate(event)
 end
 
 function M:cmdProjectLoad(event)
-    log:assert(self._projFile == nil, "Project is open, save all work and restart nvim")
     local parsed = self:_cmdProjectLoadParseArgs(event.fargs)
     self:_projLoad(parsed.name)
     util.forEachBuf(function (bufId)
@@ -198,6 +198,10 @@ end
 -- loads the file from disk and parses it setting up the project fields
 function M:_projLoad(name)
     self:_validateProjName(name)
+    if name == (self._proj or {}).name then 
+        log:debug("Attempt to reopen the current project: %s", name)
+        return
+    end
     log:assert(self:projExists(name), "Project does not exist")
     self._projFile = self:_projFileName(name)
     local isGood, err = pcall(function ()
@@ -240,11 +244,11 @@ function M:_projToJson()
     return vim.json.encode(self._proj)
 end
 
-function M:_projFromFile(file)
-    local opened, err = io.open(file, "r")
-    log:assert(opened, function() return "Failed to open project file: " .. err end)
-    if not opened then return end
-    local json = opened:read("a")
+function M:_projFromFile(path)
+    local file, err = io.open(path, "r")
+    log:assert(file, function() return "Failed to open project file: " .. err end)
+    if not file then return end
+    local json = file:read("a")
     return self:_projFromJson(json)
 end
 
