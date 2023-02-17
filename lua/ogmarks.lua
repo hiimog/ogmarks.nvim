@@ -118,7 +118,7 @@ end
 function M:cmdProjectLoad(event)
     log:assert(self._projFile == nil, "Project is open, save all work and restart nvim")
     local parsed = self:_cmdProjectLoadParseArgs(event.fargs)
-    self:_projLoad(parsed.file)
+    self:_projLoad(parsed.name)
     util.forEachBuf(function (bufId)
         self:_bufLoadMarks(bufId)
     end)
@@ -254,6 +254,7 @@ end
 
 function M:_projFileName(name)
     self:_validateProjName(name)
+    if config.projectDir:sub(#config.projectDir) == "/" then return config.projectDir..name..".json" end
     return config.projectDir.."/"..name..".json"
 end
 
@@ -266,5 +267,6 @@ function M:_validateProjActive()
     log:assert(self._proj, "No active project")
     log:assert(self._projFile, "Project exists, but no filename -this is a bug")
 end
+
 
 return M
