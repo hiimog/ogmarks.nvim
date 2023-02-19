@@ -14,7 +14,7 @@ function M.defaultConfig()
             file = "/tmp/"..M.timestamp()..".log",
             level = "debug"
         },
-        projectDir = "/tmp/"
+        projectDir = "/tmp/",
     }
 end
 

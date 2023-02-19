@@ -1,9 +1,16 @@
-local M = {}
+local M = {
+    _isIncremental = false,
+    _increments = 0,
+}
 
 ---@diagnostic disable-next-line: deprecated
 table.unpack = table.unpack or unpack
 
-function M.timestamp()
+function M:timestamp()
+    if self._isIncremental then
+        self._increments = (self._increments or 0) + 1
+        return tostring(self._increments)
+    end
     return os.date("%Y%m%d%H%M%S")
 end
 
