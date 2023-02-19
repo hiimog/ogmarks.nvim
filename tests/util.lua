@@ -18,8 +18,9 @@ function M.defaultConfig()
     }
 end
 
-function M.lorem()
+function M.lorem(row)
     vim.cmd("edit /src/ogmarks.nvim/tests/text/lorem.txt")
+    if row ~= nil then vim.cmd(tostring(row)) end   
 end
 
 return M

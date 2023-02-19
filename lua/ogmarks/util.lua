@@ -1,5 +1,8 @@
 local M = {}
 
+---@diagnostic disable-next-line: deprecated
+table.unpack = table.unpack or unpack
+
 function M.timestamp()
     return os.date("%Y%m%d%H%M%S")
 end

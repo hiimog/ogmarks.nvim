@@ -57,6 +57,13 @@ function M:commandsCreate()
         nargs = "*",
         force = true,
     })
+    vim.api.nvim_create_user_command(config.commandPrefix .. "MarkCreate", function(event)
+        self:cmdMarkCreate(event)
+    end, {
+        desc = "Create an OgMark at the current position",
+        nargs = "?",
+        force = true,
+    })
 end
 
 function M:iter()
@@ -112,6 +119,7 @@ function M:setup(cfg)
 end
 
 function M:cmdProjectCreate(event)
+    log:debug(function() return "Project creation event:\n"..vim.json.encode(event) end)
     local parsed = self:_cmdProjectCreateParseArgs(event.fargs)
     local name = parsed.name
     self:_validateProjName(name)
@@ -122,7 +130,7 @@ function M:cmdProjectCreate(event)
 end
 
 function M:cmdProjectLoad(event)
-    log:debug(function() return "Project creation event:\n"..vim.json.encode(event) end)
+    log:debug(function() return "Project load event:\n"..vim.json.encode(event) end)
     local parsed = self:_cmdProjectLoadParseArgs(event.fargs)
     log:debug("Parsed load args:\n%s", vim.inspect(parsed))
     self:_projLoad(parsed.name)
@@ -139,12 +147,24 @@ function M:cmdProjectLoad(event)
     end)
 end
 
+function M:cmdMarkCreate(event)
+    log:debug(function() return "Mark creation event:\n"..vim.json.encode(event) end)
+    self:_validateProjActive()
+    local parsed = self:_cmdMarkCreateParseArgs(event.fargs)
+    log:debug("Parsed mark create args:\n%s", vim.inspect(parsed))
+    local newOgMark = self:_createOgMarkAtCurPos()
+    newOgMark.desc = parsed.desc
+    log:debug("New mark created: \n%s", vim.inspect(newOgMark))
+    table.insert(self._proj.ogmarks, newOgMark)
+    self:_setExtMark(0, newOgMark)
+    self:projSave()
+end
+
 --function M:cmdProjectList()
 --function M:cmdProjectLoad --loadbufs
 --function M:cmdProjectFix --distance 10 --edit-distance 5
 --function M:cmdProjectDelete
 --function M:cmdProjectRename
---function M:cmdMarkCreate program start
 --function M:cmdMarkTag foo bar biz baz
 --function M:cmdMarkDelete
 --function M:cmdMarkAnnotate this is more information about the mark
@@ -208,6 +228,30 @@ function M:_cmdProjectLoadParseArgs(args)
     local helpText = parser:get_usage()
     log:assert(isParsed, "Error parsing arguments: %s\n%s", parsedOrError, helpText)
     return parsedOrError
+end
+
+function M:_cmdMarkCreateParseArgs(args)
+    local parser = argparse("MarkCreate")
+    parser:argument("desc", "Description for the mark"):args("?")
+    local isParsed, parsedOrError = parser:pparse(args)
+    local helpText = parser:get_usage()
+    log:assert(isParsed, "Error parsing arguments: %s\n%s", parsedOrError, helpText)
+    return parsedOrError
+end
+
+function M:_createOgMarkAtCurPos()
+    local file, row, col = util.getCursor()
+    local rowText = util.getLine(0, row)
+    local ts = util.timestamp()
+    return {
+        absPath = file,
+        created = ts,
+        desc = nil,
+        id = #self._proj.ogmarks + 1,
+        row = row,
+        rowText = rowText,
+        updated = ts,
+    }
 end
 
 -- does nothing with setting up commands or creating extmarks -it only
