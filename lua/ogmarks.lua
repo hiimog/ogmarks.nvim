@@ -199,7 +199,7 @@ function M:_bufUpdateMarks(bufId)
             local line, col = table.unpack(extmark)
             ogmark.row = line
             ogmark.rowText = util.getLine(bufId, line)
-            ogmark.update = util.timestamp()
+            ogmark.updated = util:timestamp()
         end)
 end
 
@@ -242,7 +242,7 @@ end
 function M:_createOgMarkAtCurPos()
     local file, row, col = util.getCursor()
     local rowText = util.getLine(0, row)
-    local ts = util.timestamp()
+    local ts = util:timestamp()
     return {
         absPath = file,
         created = ts,

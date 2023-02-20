@@ -22,7 +22,7 @@ local function makeLogFunc(level)
         else 
             body = string.format(msg, ...)
         end
-        self._file:write(level .. ":" .. util.timestamp() .. ":" .. body .. "\n")
+        self._file:write(level .. ":" .. util:timestamp() .. ":" .. body .. "\n")
         self._file:flush()
     end
 end

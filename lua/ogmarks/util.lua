@@ -7,9 +7,8 @@ local M = {
 table.unpack = table.unpack or unpack
 
 function M:timestamp()
-    if self._isIncremental then
-        self._increments = (self._increments or 0) + 1
-        return tostring(self._increments)
+    if self._timestamp then
+        return tostring(self._timestamp)
     end
     return os.date("%Y%m%d%H%M%S")
 end
@@ -88,7 +87,7 @@ end
 
 -- 0 indexed
 function M.getLine(bufId, line)
-    return vim.api.nvim_buf_get_lines(bufId, line, line+1, true)
+    return vim.api.nvim_buf_get_lines(bufId, line, line+1, true)[1]
 end
 
 function M.pwd()
