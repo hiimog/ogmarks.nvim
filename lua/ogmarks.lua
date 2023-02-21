@@ -4,7 +4,6 @@ local fn = require("lua.thirdparty.fun")
 local config = require("ogmarks.config")
 local s = require("lua.thirdparty.schema")
 local argparse = require("lua.thirdparty.argparse")
-
 local M = {
     _proj = nil,
     _projFile = nil,
@@ -19,6 +18,205 @@ local schemaSetup = s.Record {
         file = s.Optional(s.String),
         level = s.Optional(s.OneOf("debug", "info", "warn", "error"))
     })
+}
+
+local function confirmDelete()
+    return {
+        short = "y",
+        long = "yes",
+        description = "confirm the deletion",
+    }
+end
+
+local commands = {
+--function M:cmdProjectList()
+--function M:cmdProjectLoad --loadbufs
+--function M:cmdProjectFix --distance 10 --edit-distance 5
+--function M:cmdProjectDelete
+--function M:cmdProjectRename
+--function M:cmdMarkTag foo bar biz baz
+--function M:cmdMarkDelete
+--function M:cmdMarkAnnotate this is more information about the mark
+    {
+        name = "ProjectLoad",
+        desc = "Load a project",
+        flags = {
+            {
+                short = "o",
+                long = "openall",
+                desc = "Open all marked files in the current window"
+            }
+        },
+        nargs = "*",
+        arguments = {
+            {
+                name = "name",
+                placeholder = "name",
+                desc = "name of the project",
+                cardinality = "1"
+            }
+        },
+        handler = function(self, event)
+            log:debug(function() return "Project load event:\n" .. vim.json.encode(event) end)
+            local parsed = self:_cmdProjectLoadParseArgs(event.fargs)
+            log:debug("Parsed load args:\n%s", vim.inspect(parsed))
+            self:_projLoad(parsed.name)
+            if parsed.openall then
+                local seen = {}
+                self:iter():each(function(ogmark)
+                    if seen[ogmark.absPath] then return end
+                    seen[ogmark.absPath] = true
+                    vim.cmd("edit " .. ogmark.absPath)
+                end)
+            end
+            util.forEachBuf(function(bufId)
+                self:_bufSetExtMarks(bufId)
+            end)
+        end
+    },
+    {
+        name = "ProjectCreate",
+        desc = "Create a new project",
+        options = {
+            {
+                short = "i",
+                long = "icon",
+                desc = "default symbol for all new marks"
+            },
+        },
+        nargs = "*",
+        arguments = {
+            {
+                name = "name",
+                placeholder = "name",
+                desc = "name of the new project",
+                cardinality = "1"
+            }
+        },
+        handler = function(self, event)
+            log:debug(function() return "Project creation event:\n" .. vim.json.encode(event) end)
+            local parsed = self:_cmdProjectCreateParseArgs(event.fargs)
+            local name = parsed.name
+            self:_validateProjName(name)
+            log:assert(not self:projExists(name), "Project already exists")
+            self._proj = self:projCreate(name)
+            self._projFile = self:_projFileName(name)
+            self:projSave()
+        end
+    },
+    {
+        name = "ProjectList",
+        desc = "List projects that can be loaded",
+        nargs = "0",
+        handler = function(self, event)
+            local ls, err = util:execute("ls -1 " .. config.projectDir .. "/*.json")
+            log:assert(ls, function() return string.format("Failed to list project directory files: %s", err) end)
+            local res = {}
+            for _, name in string.gmatch(ls or "", "[a-zA-Z0-9_-]") do
+                table.insert(res, name)
+            end
+            return table.concat(res, ", ")
+        end
+    },
+    {
+        name = "ProjectDelete",
+        desc = "Delete a project",
+        nargs = "*",
+        flags = {
+            confirmDelete()
+        },
+        arguments = {
+            {
+                name = "name",
+                placeholder = "name",
+                desc = "name of the project to delete",
+                cardinality = "1"
+            }
+        },
+        handler = function(self, event)
+
+        end
+    },
+    {
+        name = "MarkCreate",
+        desc = "Create OgMark at the current cursor position",
+        options = {
+            {
+                short = "t",
+                long = "tags",
+                placeholder = "tag+",
+                desc = "tags to add to the mark"
+            },
+            {
+                short = "i",
+                long = "icon",
+                placeholder = "👉",
+                desc = "symbol for the OgMark"
+            },
+        },
+        nargs = "*",
+        arguments = {
+            {
+                name = "desc",
+                placeholder = "description",
+                desc = "description for the mark",
+                cardinality = "+"
+            }
+        },
+        handler = function(self, event)
+            log:debug(function() return "Mark creation event:\n" .. vim.json.encode(event) end)
+            self:_validateProjActive()
+            local parsed = self:_cmdMarkCreateParseArgs(event.fargs)
+            log:debug("Parsed mark create args:\n%s", vim.inspect(parsed))
+            local newOgMark = self:_createOgMarkAtCurPos()
+            newOgMark.desc = parsed.desc
+            newOgMark.
+                log:debug("New mark created: \n%s", vim.inspect(newOgMark))
+            table.insert(self._proj.ogmarks, newOgMark)
+            self:_setExtMark(0, newOgMark)
+            self:projSave()
+        end
+    },
+    {
+        name = "MarkDelete",
+        desc = "Delete the mark at the cursor",
+        nargs = "*",
+        flags = {
+            confirmDelete()
+        },
+        arguments = {
+            {
+                name = "name",
+                placeholder = "name",
+                desc = "name of the project to delete",
+                cardinality = "1"
+            }
+        },
+    },
+    {
+        name = "MarkInfo",
+        desc = "Print information about created OgMarks",
+        nargs = "*",
+        flags = {
+            short = "a",
+            long = "all",
+            desc = "print information about all marks for the project",
+        },
+        handler = function(self, event)
+        end
+    },
+    {
+        name = "MarkUpdate",
+        desc = "update OgMark tags, description, icon, etc",
+        nargs = "*",
+        options = {
+            {
+                short = "t",
+                long = "tags",
+                desc = "Update the associated tags"
+            }
+        }
+    }
 }
 
 function M:augroupCreate()
@@ -43,27 +241,15 @@ function M:augroupCreate()
 end
 
 function M:commandsCreate()
-    vim.api.nvim_create_user_command(config.commandPrefix .. "ProjectCreate", function(event)
-        self:cmdProjectCreate(event)
-    end, {
-        desc = "Create a new project",
-        nargs = "*",
-        force = true,
-    })
-    vim.api.nvim_create_user_command(config.commandPrefix .. "ProjectLoad", function(event)
-        self:cmdProjectLoad(event)
-    end, {
-        desc = "Load a project from disk",
-        nargs = "*",
-        force = true,
-    })
-    vim.api.nvim_create_user_command(config.commandPrefix .. "MarkCreate", function(event)
-        self:cmdMarkCreate(event)
-    end, {
-        desc = "Create an OgMark at the current position",
-        nargs = "?",
-        force = true,
-    })
+    for _, cmd in ipairs(commands) do
+        vim.api.nvim_create_user_command(config.commandPrefix .. cmd.name, function(event)
+            cmd.handler(self, event)
+        end, {
+            desc = cmd.desc,
+            nargs = cmd.nargs,
+            force = true,
+        })
+    end
 end
 
 function M:iter()
@@ -118,58 +304,6 @@ function M:setup(cfg)
     self:augroupCreate()
 end
 
-function M:cmdProjectCreate(event)
-    log:debug(function() return "Project creation event:\n"..vim.json.encode(event) end)
-    local parsed = self:_cmdProjectCreateParseArgs(event.fargs)
-    local name = parsed.name
-    self:_validateProjName(name)
-    log:assert(not self:projExists(name), "Project already exists")
-    self._proj = self:projCreate(name)
-    self._projFile = self:_projFileName(name)
-    self:projSave()
-end
-
-function M:cmdProjectLoad(event)
-    log:debug(function() return "Project load event:\n"..vim.json.encode(event) end)
-    local parsed = self:_cmdProjectLoadParseArgs(event.fargs)
-    log:debug("Parsed load args:\n%s", vim.inspect(parsed))
-    self:_projLoad(parsed.name)
-    if parsed.openall then
-        local seen = {}
-        self:iter():each(function(ogmark)
-            if seen[ogmark.absPath] then return end
-            seen[ogmark.absPath] = true
-            vim.cmd("edit " .. ogmark.absPath)
-        end)
-    end
-    util.forEachBuf(function(bufId)
-        self:_bufSetExtMarks(bufId)
-    end)
-end
-
-function M:cmdMarkCreate(event)
-    log:debug(function() return "Mark creation event:\n"..vim.json.encode(event) end)
-    self:_validateProjActive()
-    local parsed = self:_cmdMarkCreateParseArgs(event.fargs)
-    log:debug("Parsed mark create args:\n%s", vim.inspect(parsed))
-    local newOgMark = self:_createOgMarkAtCurPos()
-    newOgMark.desc = parsed.desc
-    log:debug("New mark created: \n%s", vim.inspect(newOgMark))
-    table.insert(self._proj.ogmarks, newOgMark)
-    self:_setExtMark(0, newOgMark)
-    self:projSave()
-end
-
---function M:cmdProjectList()
---function M:cmdProjectLoad --loadbufs
---function M:cmdProjectFix --distance 10 --edit-distance 5
---function M:cmdProjectDelete
---function M:cmdProjectRename
---function M:cmdMarkTag foo bar biz baz
---function M:cmdMarkDelete
---function M:cmdMarkAnnotate this is more information about the mark
-
-
 function M:_bufSetExtMarks(bufId)
     local file = vim.api.nvim_buf_get_name(bufId)
     if file == "" then
@@ -211,32 +345,23 @@ function M:_setExtMark(bufId, ogmark)
     })
 end
 
-function M:_cmdProjectCreateParseArgs(args)
-    local parser = argparse("ProjectCreate")
-    parser:argument("name", "name of the new project"):args(1)
-    local isParsed, parsedOrError = parser:pparse(args)
-    local helpText = parser:get_usage()
-    log:assert(isParsed, "Error parsing arguments: %s\n%s", parsedOrError, helpText)
-    return parsedOrError
-end
-
-function M:_cmdProjectLoadParseArgs(args)
-    local parser = argparse("ProjectLoad")
-    parser:flag("-o --openall")
-    parser:argument("name", "name of the project"):args(1)
-    local isParsed, parsedOrError = parser:pparse(args)
-    local helpText = parser:get_usage()
-    log:assert(isParsed, "Error parsing arguments: %s\n%s", parsedOrError, helpText)
-    return parsedOrError
-end
-
-function M:_cmdMarkCreateParseArgs(args)
-    local parser = argparse("MarkCreate")
-    parser:argument("desc", "Description for the mark"):args("?")
-    local isParsed, parsedOrError = parser:pparse(args)
-    local helpText = parser:get_usage()
-    log:assert(isParsed, "Error parsing arguments: %s\n%s", parsedOrError, helpText)
-    return parsedOrError
+function M:_createCommandParseArgsFunction(cmd)
+    return function(_self, args)
+        local parser = argparse(cmd.name)
+        for _, flag in cmd.flags or {} do
+            parser:flag(string.format("-% --%s", flag.short, flag.long), flag.desc)
+        end
+        for _, opt in cmd.options or {} do
+            parser:option(string.format("-%s --%s", opt.short, opt.long), opt.desc)
+        end
+        for _, arg in cmd.arguments or {} do
+            parser:argument(arg.name, arg.desc):args(arg.cardinality)
+        end
+        local isParsed, parsedOrError = parser:pparse(args)
+        local helpText = parser:get_usage()
+        log:assert(isParsed, "Error parsing args: %s\n%s", parsedOrError, helpText)
+        return parsedOrError
+    end
 end
 
 function M:_createOgMarkAtCurPos()
@@ -290,8 +415,6 @@ function M:_nuke()
         local isGood, err = pcall(function() vim.api.nvim_win_close(winId, true) end)
         if not isGood and string.find(err or "", "Cannot close last window") ~= nil then return end
     end)
-
-    vim.api.nvim_del_user_command(config.commandPrefix .. "ProjectCreate")
 
     self._augroupId = nil
     self._namespaceId = nil

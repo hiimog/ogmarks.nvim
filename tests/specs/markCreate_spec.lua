@@ -25,7 +25,3 @@ describe("mark create", function ()
         assert.are.same(expected, ogmarks._proj.ogmarks[1])
     end)
 end)
-
-describe("mark update", function ()
-    it("should ")
-end)

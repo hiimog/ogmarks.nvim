@@ -27,6 +27,23 @@ function M.mkDir(dir)
     os.execute("mkdir -p " .. dir)
 end
 
+function M:readText(file)
+    local f, err = io.open(file, "r+")
+    if not f then return nil, err end
+    local text = f:read("a")
+    local wasSuccess, exitOrSignal, code = f:close()
+    return text, nil
+end
+
+function M:execute(cmd)
+    local fileName = "/tmp/ogmarks"..M:timestamp()..".tmp"
+    local wasSuccessful, exitOrSignal, code = os.execute(cmd.." > "..fileName)
+    local tmpText, err = self:readText(fileName)
+    if err then return nil, err end
+    local wasDeleted, err = os.remove(fileName)
+    return tostring(tmpText), nil
+end
+
 function M.forEachBuf(func)
     local res = {}
     local bufIds = vim.api.nvim_list_bufs()
