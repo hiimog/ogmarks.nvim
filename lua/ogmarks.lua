@@ -47,7 +47,6 @@ local commands = {
                 desc = "Open all marked files in the current window"
             }
         },
-        nargs = "*",
         arguments = {
             {
                 name = "name",
@@ -84,7 +83,6 @@ local commands = {
                 desc = "default symbol for all new marks"
             },
         },
-        nargs = "*",
         arguments = {
             {
                 name = "name",
@@ -107,7 +105,6 @@ local commands = {
     {
         name = "ProjectList",
         desc = "List projects that can be loaded",
-        nargs = "0",
         handler = function(self, event)
             local ls, err = util:execute("ls -1 " .. config.projectDir .. "/*.json")
             log:assert(ls, function() return string.format("Failed to list project directory files: %s", err) end)
@@ -121,7 +118,6 @@ local commands = {
     {
         name = "ProjectDelete",
         desc = "Delete a project",
-        nargs = "*",
         flags = {
             confirmDelete()
         },
@@ -134,7 +130,7 @@ local commands = {
             }
         },
         handler = function(self, event)
-
+            
         end
     },
     {
@@ -154,7 +150,6 @@ local commands = {
                 desc = "symbol for the OgMark"
             },
         },
-        nargs = "*",
         arguments = {
             {
                 name = "desc",
@@ -168,10 +163,9 @@ local commands = {
             self:_validateProjActive()
             local parsed = self:_cmdMarkCreateParseArgs(event.fargs)
             log:debug("Parsed mark create args:\n%s", vim.inspect(parsed))
-            local newOgMark = self:_createOgMarkAtCurPos()
-            newOgMark.desc = parsed.desc
-            newOgMark.
-                log:debug("New mark created: \n%s", vim.inspect(newOgMark))
+            local newOgMark = self:_createOgMarkAtCursor()
+            newOgMark.desc = table.concat(parsed.desc, " ") -- description entered plainly will be a table here
+            log:debug("New mark created: \n%s", vim.inspect(newOgMark))
             table.insert(self._proj.ogmarks, newOgMark)
             self:_setExtMark(0, newOgMark)
             self:projSave()
@@ -180,7 +174,6 @@ local commands = {
     {
         name = "MarkDelete",
         desc = "Delete the mark at the cursor",
-        nargs = "*",
         flags = {
             confirmDelete()
         },
@@ -196,24 +189,35 @@ local commands = {
     {
         name = "MarkInfo",
         desc = "Print information about created OgMarks",
-        nargs = "*",
-        flags = {
-            short = "a",
-            long = "all",
-            desc = "print information about all marks for the project",
-        },
         handler = function(self, event)
+            log:debug(function() return "Mark info event:\n" .. vim.json.encode(event) end)
+            self:_validateProjActive()
+            local ogMark = self:_getOgMarkAtCursor()
+            log:assert(ogMark, "No OgMark found at position")
+            self:_printOgMark(ogMark)
         end
     },
     {
         name = "MarkUpdate",
         desc = "update OgMark tags, description, icon, etc",
-        nargs = "*",
         options = {
             {
                 short = "t",
                 long = "tags",
-                desc = "Update the associated tags"
+                desc = "update the associated tags"
+            },
+            {
+                short = "i",
+                long = "icon",
+                desc = "letter, symbol, emoji that will appear next to the breakpoint"
+            }
+        },
+        arguments = {
+            {
+                name = "desc",
+                placeholder = "description",
+                desc = "desc to use for the OgMark",
+                cardinality = "+"
             }
         }
     }
@@ -242,11 +246,13 @@ end
 
 function M:commandsCreate()
     for _, cmd in ipairs(commands) do
+        log:debug(function() return string.format("Creating command %s\n%s", cmd.name, vim.inspect(cmd)) end)
+        self["_cmd"..cmd.name.."ParseArgs"] = self:_createCommandParseArgsFunction(cmd)
         vim.api.nvim_create_user_command(config.commandPrefix .. cmd.name, function(event)
             cmd.handler(self, event)
         end, {
             desc = cmd.desc,
-            nargs = cmd.nargs,
+            nargs = "*",
             force = true,
         })
     end
@@ -348,13 +354,13 @@ end
 function M:_createCommandParseArgsFunction(cmd)
     return function(_self, args)
         local parser = argparse(cmd.name)
-        for _, flag in cmd.flags or {} do
-            parser:flag(string.format("-% --%s", flag.short, flag.long), flag.desc)
+        for _, flag in ipairs(cmd.flags or {}) do
+            parser:flag("-"..flag.short.." --"..flag.long, flag.desc)
         end
-        for _, opt in cmd.options or {} do
-            parser:option(string.format("-%s --%s", opt.short, opt.long), opt.desc)
+        for _, opt in ipairs(cmd.options or {}) do
+            parser:option("-"..opt.short.." --"..opt.long, opt.desc)
         end
-        for _, arg in cmd.arguments or {} do
+        for _, arg in ipairs(cmd.arguments or {}) do
             parser:argument(arg.name, arg.desc):args(arg.cardinality)
         end
         local isParsed, parsedOrError = parser:pparse(args)
@@ -364,7 +370,7 @@ function M:_createCommandParseArgsFunction(cmd)
     end
 end
 
-function M:_createOgMarkAtCurPos()
+function M:_createOgMarkAtCursor()
     local file, row, col = util.getCursor()
     local rowText = util.getLine(0, row)
     local ts = util:timestamp()
@@ -377,6 +383,15 @@ function M:_createOgMarkAtCurPos()
         rowText = rowText,
         updated = ts,
     }
+end
+
+function M:_getOgMarkAtCursor()
+    self:_validateProjActive()
+    local file, row, col = util.getCursor()
+    local extMarks = vim.api.nvim_buf_get_extmarks(0, self._namespaceId, row, row+1, {})
+    if #extMarks == 0 then return nil end
+    local id = extMarks[1].id
+    return self._proj.ogmarks[id]
 end
 
 -- does nothing with setting up commands or creating extmarks -it only
@@ -455,6 +470,20 @@ end
 function M:_validateProjActive()
     log:assert(self._proj, "No active project")
     log:assert(self._projFile, "Project exists, but no filename -this is a bug")
+end
+
+function M:_printOgMark(ogMark)
+    log:assert(ogMark, "OgMark must be provided for printing")
+    local tags = table.concat(ogMark.tags or {}, ", ")
+    local text = string.format([[ID: %d
+DESC: %s
+TAGS: %s
+FILE: %s
+ROW: %d
+TEXT: %s
+]], ogMark.id, ogMark.desc, tags, ogMark.absPath, ogMark.row, ogMark.rowText)
+    print(text)
+    return text
 end
 
 return M
