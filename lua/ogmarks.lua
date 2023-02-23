@@ -29,14 +29,14 @@ local function confirmDelete()
 end
 
 local commands = {
---function M:cmdProjectList()
---function M:cmdProjectLoad --loadbufs
---function M:cmdProjectFix --distance 10 --edit-distance 5
---function M:cmdProjectDelete
---function M:cmdProjectRename
---function M:cmdMarkTag foo bar biz baz
---function M:cmdMarkDelete
---function M:cmdMarkAnnotate this is more information about the mark
+    --function M:cmdProjectList()
+    --function M:cmdProjectLoad --loadbufs
+    --function M:cmdProjectFix --distance 10 --edit-distance 5
+    --function M:cmdProjectDelete
+    --function M:cmdProjectRename
+    --function M:cmdMarkTag foo bar biz baz
+    --function M:cmdMarkDelete
+    --function M:cmdMarkAnnotate this is more information about the mark
     {
         name = "ProjectLoad",
         desc = "Load a project",
@@ -106,13 +106,13 @@ local commands = {
         name = "ProjectList",
         desc = "List projects that can be loaded",
         handler = function(self, event)
-            local ls, err = util:execute("ls -1 " .. config.projectDir .. "/*.json")
+            local ls, err = util:execute("find " .. config.projectDir .. " -type f -regex '.*/[a-zA-Z0-9_]+.json' -exec basename -s .json {} \\;")
             log:assert(ls, function() return string.format("Failed to list project directory files: %s", err) end)
             local res = {}
-            for _, name in string.gmatch(ls or "", "[a-zA-Z0-9_-]") do
+            for _, name in string.gmatch(ls or "", "[a-zA-Z0-9_-]+") do
                 table.insert(res, name)
             end
-            return table.concat(res, ", ")
+            print(table.concat(res, ", "))
         end
     },
     {
@@ -130,7 +130,7 @@ local commands = {
             }
         },
         handler = function(self, event)
-            
+
         end
     },
     {
@@ -247,7 +247,7 @@ end
 function M:commandsCreate()
     for _, cmd in ipairs(commands) do
         log:debug(function() return string.format("Creating command %s\n%s", cmd.name, vim.inspect(cmd)) end)
-        self["_cmd"..cmd.name.."ParseArgs"] = self:_createCommandParseArgsFunction(cmd)
+        self["_cmd" .. cmd.name .. "ParseArgs"] = self:_createCommandParseArgsFunction(cmd)
         vim.api.nvim_create_user_command(config.commandPrefix .. cmd.name, function(event)
             cmd.handler(self, event)
         end, {
@@ -355,10 +355,10 @@ function M:_createCommandParseArgsFunction(cmd)
     return function(_self, args)
         local parser = argparse(cmd.name)
         for _, flag in ipairs(cmd.flags or {}) do
-            parser:flag("-"..flag.short.." --"..flag.long, flag.desc)
+            parser:flag("-" .. flag.short .. " --" .. flag.long, flag.desc)
         end
         for _, opt in ipairs(cmd.options or {}) do
-            parser:option("-"..opt.short.." --"..opt.long, opt.desc)
+            parser:option("-" .. opt.short .. " --" .. opt.long, opt.desc)
         end
         for _, arg in ipairs(cmd.arguments or {}) do
             parser:argument(arg.name, arg.desc):args(arg.cardinality)
@@ -388,7 +388,7 @@ end
 function M:_getOgMarkAtCursor()
     self:_validateProjActive()
     local file, row, col = util.getCursor()
-    local extMarks = vim.api.nvim_buf_get_extmarks(0, self._namespaceId, row, row+1, {})
+    local extMarks = vim.api.nvim_buf_get_extmarks(0, self._namespaceId, row, row + 1, {})
     if #extMarks == 0 then return nil end
     local id = extMarks[1].id
     return self._proj.ogmarks[id]

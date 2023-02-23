@@ -36,11 +36,11 @@ function M:readText(file)
 end
 
 function M:execute(cmd)
-    local fileName = "/tmp/ogmarks"..M:timestamp()..".tmp"
-    local wasSuccessful, exitOrSignal, code = os.execute(cmd.." > "..fileName)
+    local fileName = "/tmp/ogmarks.tmp"
+    local wasSuccessful, exitOrSignal, code = os.execute(cmd .. " > " .. fileName)
+    if not wasSuccessful then error("cmd not successful") end
     local tmpText, err = self:readText(fileName)
     if err then return nil, err end
-    local wasDeleted, err = os.remove(fileName)
     return tostring(tmpText), nil
 end
 
@@ -104,13 +104,28 @@ end
 
 -- 0 indexed
 function M.getLine(bufId, line)
-    return vim.api.nvim_buf_get_lines(bufId, line, line+1, true)[1]
+    return vim.api.nvim_buf_get_lines(bufId, line, line + 1, true)[1]
 end
 
 function M.pwd()
     local proc = assert(io.popen("pwd", "r"))
     local res = proc:read("a")
     return res
+end
+
+function M.trim(s)
+    return s:match("^%s*(.-)%s*$")
+end
+
+function M.split(inputstr, sep)
+    if sep == nil then
+        sep = "%s"
+    end
+    local t = {}
+    for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
+        table.insert(t, str)
+    end
+    return t
 end
 
 return M

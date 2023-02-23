@@ -8,6 +8,11 @@ describe("project list", function ()
     ogmarks:setup(cfg)
     
     it("should only show files with valid project file names", function()
-        
+        vim.cmd("redir @z")
+        vim.cmd("OgMarksProjectList")
+        vim.cmd("redir end")
+        local output = vim.fn.getreg("z")
+        local trimmed = ogmarksutil.trim(output)
+        assert.are.same("autocmd_spec, ll, lorem, multifile", trimmed)
     end)
 end)
