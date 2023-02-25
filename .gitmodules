@@ -1,3 +1,0 @@
-[submodule "tests/thirdparty/plenary.nvim"]
-	path = tests/thirdparty/plenary.nvim
-	url = https://github.com/ThomasFeher/plenary.nvim.git
