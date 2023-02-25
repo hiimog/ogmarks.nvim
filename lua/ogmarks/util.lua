@@ -35,14 +35,13 @@ function M:readText(file)
     return text, nil
 end
 
-function M:execute(cmd)
-    local fileName = "/tmp/ogmarks.tmp"
-    local wasSuccessful, exitOrSignal, code = os.execute(cmd .. " > " .. fileName)
-    if not wasSuccessful then error("cmd not successful") end
-    local tmpText, err = self:readText(fileName)
-    if err then return nil, err end
-    return tostring(tmpText), nil
+function M.ls(dir)
+    local fileName = "/tmp/ogmarks"..M:timestamp()..".tmp"
+    local success, exitSignal, code = os.execute("ls -1 "..dir.." > "..fileName)
+    if not success then return nil, string.format("%s %d", exitSignal, code) end
+    return M:readText(fileName)
 end
+
 
 function M.forEachBuf(func)
     local res = {}

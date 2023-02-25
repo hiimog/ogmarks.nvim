@@ -5,5 +5,8 @@
         "it",
         "before_each",
         "spy"
+    ],
+    "Lua.diagnostics.disable": [
+        "need-check-nil"
     ]
 }

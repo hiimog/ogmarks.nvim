@@ -106,13 +106,15 @@ local commands = {
         name = "ProjectList",
         desc = "List projects that can be loaded",
         handler = function(self, event)
-            local ls, err = util:execute("find " .. config.projectDir .. " -type f -regex '.*/[a-zA-Z0-9_]+.json' -exec basename -s .json {} \\;")
-            log:assert(ls, function() return string.format("Failed to list project directory files: %s", err) end)
-            local res = {}
-            for _, name in string.gmatch(ls or "", "[a-zA-Z0-9_-]+") do
-                table.insert(res, name)
+            local i, t, popen = 0, {}, io.popen
+            local pfile = popen('ls -a "'..config.projectDir..'"')
+            log:assert(pfile, "Failed to list files")
+            for filename in pfile:lines() do
+                i = i + 1
+                t[i] = filename
             end
-            print(table.concat(res, ", "))
+            pfile:close()
+            return t
         end
     },
     {
