@@ -14,6 +14,9 @@ Opinionated and persistent marking
 
 `:CocList demo_list`
 
+# Building
+- make sure that `sourcemap: 'inline'` is set in `esbuild.js`
+
 ## License
 
 MIT

@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 async function start(watch) {
   await require('esbuild').build({
-    entryPoints: ['src/index.ts'],
+    entryPoints: ['/home/og/src/ogmarks.nvim/src/index.ts'],
     bundle: true,
     watch,
-    minify: process.env.NODE_ENV === 'production',
-    sourcemap: process.env.NODE_ENV === 'development',
+    minify: false,
+    sourcemap: "inline",
     mainFields: ['module', 'main'],
     external: ['coc.nvim'],
     platform: 'node',
