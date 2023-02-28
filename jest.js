@@ -2,7 +2,7 @@ const path = require('path')
 const os = require('os')
 const fs = require('fs')
 
-const tmpdir = process.env.TMPDIR = path.join(os.tmpdir(), 'coc-test')
+const tmpdir = process.env.TMPDIR = path.join(os.tmpdir(), 'ogmarks-test')
 process.on('uncaughtException', err => {
   let msg = 'Uncaught exception: ' + err.stack
   console.error(msg)
