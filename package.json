@@ -49,7 +49,9 @@
     "watch": "node esbuild.js --watch",
     "build": "node esbuild.js",
     "prepare": "node esbuild.js",
+    "pretty": "yarn prettier --write .",
     "test": "./node_modules/.bin/jest --forceExit",
+    "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
     "test-build": "./node_modules/.bin/jest --coverage --forceExit"
   },
   "devDependencies": {

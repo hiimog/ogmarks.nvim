@@ -5,7 +5,7 @@ async function start(watch) {
     bundle: true,
     watch,
     minify: false,
-    sourcemap: "inline",
+    sourcemap: 'inline',
     mainFields: ['module', 'main'],
     external: ['coc.nvim'],
     platform: 'node',

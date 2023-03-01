@@ -2,7 +2,7 @@ import { Neovim, workspace, events, BufEvents } from 'coc.nvim';
 import { attach, Plugin, NvimPlugin, NeovimClient } from 'neovim';
 import * as cp from 'child_process';
 import path from 'path';
-const startupVim = path.resolve(__dirname, 'vimrc');
+const startupVim = path.resolve(__dirname, 'startup.vim');
 let neovimProc: cp.ChildProcess;
 let client: NeovimClient;
 
