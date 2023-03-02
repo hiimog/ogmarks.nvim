@@ -1,10 +1,10 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "rootDirs": ["./", "../src"]
+    "inlineSourceMap": true,
+    "inlineSources": true,
   },
   "buildOptions": {
     "incremental": true
   },
-  "include": ["./*.ts", "../src/**/*.ts"]
 }
