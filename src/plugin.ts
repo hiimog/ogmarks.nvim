@@ -1,9 +1,12 @@
 import { OgMark } from './types';
+import { NeovimClient } from 'neovim'
 
 export class Plugin {
     public ogmarks: OgMark[];
+    private nvim: NeovimClient;
 
-    constructor(ogmarks: OgMark[]) {
-        this.ogmarks = ogmarks;
+    constructor(nvim: NeovimClient) {
+        this.ogmarks = [];
+        this.nvim = nvim;
     }
 }
