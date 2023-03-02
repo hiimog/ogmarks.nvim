@@ -5,4 +5,5 @@
   "buildOptions": {
     "incremental": true
   },
+  "exclude": ["../src/**/*.test.ts"]
 }

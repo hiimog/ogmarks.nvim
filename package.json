@@ -8,9 +8,11 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "build": "yarn tsc",
     "clean": "yarn rimraf dist",
-    "test": "yarn jest"
+    "rel:build": "yarn tsc -p ./config/tsconfig.rel.json",
+    "test": "yarn clean && yarn test:build && yarn test:run",
+    "test:run": "yarn jest -c ./dist/config/jest.config.js",
+    "test:build": "yarn tsc -p ./config/tsconfig.test.json"
   },
   "devDependencies": {
     "@types/jest": "^29.4.0",
