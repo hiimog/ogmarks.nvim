@@ -1,0 +1,1 @@
+set runtimepath+='/home/og/src/ogmarks.nvim/dist/src'

@@ -12,12 +12,11 @@ describe("Plugin", () => {
         neovimProc = spawn("nvim", ["--embed"], {
         })
         nvim = attach({proc: neovimProc})
-        nvim.on("request", (method: string, args: any[]) => {
-            requests.push([method, args])
-        })
-        nvim.on("notification", (method: string, args: any[]) => {
-            notifications.push([method, args])
-        })
+    })
+
+    afterAll(() => {
+        nvim.quit()
+        neovimProc.kill()
     })
 
     beforeEach(() => {
@@ -25,7 +24,11 @@ describe("Plugin", () => {
         notifications = []
     })
 
-    it("should load", () => {
-        //const p = new Plugin()
+    it("should load", async () => {
+        const got = await nvim.call("abs", [-1])
+        expect(got).toEqual(1)
+    })
+
+    it("should load plugin", async() => {
     })
 })

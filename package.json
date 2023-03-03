@@ -2,7 +2,7 @@
   "name": "ogmarks.nvim",
   "version": "1.0.0",
   "description": "todo",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "repository": "https://github.com/hiimog/ogmarks.nvim.git",
   "author": "OG <og@hiimog.com>",
   "license": "MIT",
@@ -17,6 +17,7 @@
   "devDependencies": {
     "@types/jest": "^29.4.0",
     "@types/node": "^18.14.2",
+    "http-server": "^14.1.1",
     "jest": "^29.4.3",
     "neovim": "^4.10.1",
     "rimraf": "^4.1.3",
