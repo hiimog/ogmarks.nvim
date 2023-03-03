@@ -9,10 +9,12 @@
   "private": false,
   "scripts": {
     "clean": "yarn rimraf dist",
+    "config:build": "yarn tsc --module commonjs  --target es2016 --moduleResolution node --outDir ./dist ./config/*.ts",
     "rel:build": "yarn tsc -p ./config/tsconfig.rel.json",
-    "test": "yarn clean && yarn test:build && yarn test:run",
-    "test:run": "yarn jest -c ./dist/rplugin/node/config/jest.config.js",
-    "test:build": "yarn tsc -p ./config/tsconfig.test.json && cp ./package.json ./dist/rplugin/node/src/"
+    "test": "yarn clean && yarn config:build && yarn test:build && yarn packagejson:copy && yarn test:run",
+    "test:run": "yarn jest -c ./dist/jest.config.js",
+    "test:build": "yarn tsc -p ./config/tsconfig.test.json",
+    "packagejson:copy": "cp ./package.json ./dist/"
   },
   "devDependencies": {
     "@types/jest": "^29.4.0",
