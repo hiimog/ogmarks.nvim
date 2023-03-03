@@ -7,6 +7,6 @@ export default function(plugin: NvimPlugin) {
         await plugin.nvim.setLine("you found me")
     })
     plugin.registerFunction("TestFunc", async () => {
-        await plugin.nvim.outWrite("hi!")
+        await plugin.nvim.setLine("test func")
     })
 }

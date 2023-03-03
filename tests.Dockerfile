@@ -38,8 +38,8 @@ RUN sudo mkdir -p /src/ogmarks.nvim
 RUN sudo chown -R developer /src && sudo chgrp -R developer /src
 WORKDIR /src/ogmarks.nvim
 RUN mkdir -p ~/.config/nvim/rplugin/node/ogmarks.nvim
-RUN yarn global add neovim
+RUN yarn global add neovim typescript rimraf http-server jest
 COPY . /src/ogmarks.nvim
-RUN yarn
+RUN sudo yarn
 RUN yarn test:build
 CMD yarn test:run
