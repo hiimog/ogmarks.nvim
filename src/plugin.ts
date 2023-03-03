@@ -1,12 +1,22 @@
 import { OgMark } from './types';
-import { NeovimClient } from 'neovim'
+import { NvimPlugin } from 'neovim'
 
 export class Plugin {
     public ogmarks: OgMark[];
-    private nvim: NeovimClient;
+    private nvimPlugin: NvimPlugin;
 
-    constructor(nvim: NeovimClient) {
+    constructor(nvim: NvimPlugin) {
         this.ogmarks = [];
-        this.nvim = nvim;
+        this.nvimPlugin = nvim;
+    }
+
+    public async sayHi() {
+        await this.nvimPlugin.nvim.setLine("hi from ogmarks.nvim!")
+    }
+
+    public async registerCommands() {
+        this.nvimPlugin.registerCommand("FindMe", async () => {
+            this.sayHi()
+        })
     }
 }
