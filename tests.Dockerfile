@@ -34,12 +34,12 @@ RUN sudo npm i -g yarn
 RUN wget https://github.com/neovim/neovim/releases/download/stable/nvim-linux64.deb                      
 RUN sudo dpkg -i nvim-linux64.deb
 RUN rm nvim-linux64.deb
-
-COPY . /src/ogmarks.nvim
-
+RUN sudo mkdir -p /src/ogmarks.nvim
 RUN sudo chown -R developer /src && sudo chgrp -R developer /src
-
 WORKDIR /src/ogmarks.nvim
+RUN mkdir -p ~/.config/nvim/rplugin/node/ogmarks.nvim
+RUN yarn global add neovim
+COPY . /src/ogmarks.nvim
 RUN yarn
-
-CMD [ "yarn", "test"]
+RUN yarn test:build
+CMD yarn test:run

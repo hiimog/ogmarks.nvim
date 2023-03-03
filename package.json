@@ -13,8 +13,7 @@
     "rel:build": "yarn tsc -p ./config/tsconfig.rel.json",
     "test": "yarn clean && yarn config:build && yarn test:build && yarn packagejson:copy && yarn test:run",
     "test:run": "yarn jest -c ./dist/jest.config.js",
-    "test:build": "yarn tsc -p ./config/tsconfig.test.json",
-    "packagejson:copy": "cp ./package.json ./dist/"
+    "test:build": "yarn config:build && mkdir -p ~/.config/nvim/rplugin/node/ogmarks.nvim && yarn tsc -p ./config/tsconfig.test.json && cp ./package.json ./dist/ && cp -r ./dist/* ~/.config/nvim/rplugin/node/ogmarks.nvim/"
   },
   "devDependencies": {
     "@types/jest": "^29.4.0",
