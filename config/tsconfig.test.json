@@ -7,4 +7,5 @@
   "buildOptions": {
     "incremental": true
   },
+  "include":["../src/**/*.ts", "./jest.config.ts"]
 }

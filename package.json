@@ -2,7 +2,7 @@
   "name": "ogmarks.nvim",
   "version": "1.0.0",
   "description": "todo",
-  "main": "dist/src/index.js",
+  "main": "index.js",
   "repository": "https://github.com/hiimog/ogmarks.nvim.git",
   "author": "OG <og@hiimog.com>",
   "license": "MIT",
@@ -11,8 +11,8 @@
     "clean": "yarn rimraf dist",
     "rel:build": "yarn tsc -p ./config/tsconfig.rel.json",
     "test": "yarn clean && yarn test:build && yarn test:run",
-    "test:run": "yarn jest -c ./dist/config/jest.config.js",
-    "test:build": "yarn tsc -p ./config/tsconfig.test.json"
+    "test:run": "yarn jest -c ./dist/rplugin/node/config/jest.config.js",
+    "test:build": "yarn tsc -p ./config/tsconfig.test.json && cp ./package.json ./dist/rplugin/node/src/"
   },
   "devDependencies": {
     "@types/jest": "^29.4.0",
